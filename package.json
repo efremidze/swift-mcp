@@ -1,0 +1,17 @@
+{
+  "name": "swift-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Swift/SwiftUI learning with curated patterns from top iOS developers. Optional Patreon integration for premium content.",
+  "keywords": [
+    "mcp",
+    "swift",
+    "swiftui",
+    "ios",
+    "learning",
+    "patterns",
+    "best-practices",
+    "patreon",
+    "youtube",
+    "ai-assistant"
+  ]
+}
