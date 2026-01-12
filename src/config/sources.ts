@@ -41,16 +41,6 @@ export const AVAILABLE_SOURCES: ContentSource[] = [
   },
   
   {
-    id: 'kavsoft-youtube',
-    name: 'Kavsoft (YouTube)',
-    description: 'Advanced SwiftUI UI and animation tutorials',
-    type: 'free',
-    enabled: true,
-    requiresAuth: false,
-    status: 'enabled',
-  },
-  
-  {
     id: 'pointfree-oss',
     name: 'Point-Free (Open Source)',
     description: 'Open source Swift libraries and architecture patterns',
@@ -123,7 +113,6 @@ export class SourceManager {
         sources: {
           sundell: { enabled: true, configured: true },
           vanderlee: { enabled: true, configured: true },
-          'kavsoft-youtube': { enabled: true, configured: true },
           'pointfree-oss': { enabled: true, configured: true },
           patreon: { enabled: false, configured: false },
           'github-sponsors': { enabled: false, configured: false },

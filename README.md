@@ -52,7 +52,7 @@ Optional, requires authentication:
 ```typescript
 // Basic (free sources)
 "Show me SwiftUI animation patterns"
-→ Returns from Sundell, van der Lee, Kavsoft
+→ Returns from Sundell, van der Lee
 
 // With Patreon enabled
 "Show me advanced SwiftUI patterns from my Patreon"
@@ -82,7 +82,7 @@ Optional, requires authentication:
 swift-mcp source enable patreon
 
 # Disable a source
-swift-mcp source disable kavsoft
+swift-mcp source disable pointfree
 
 # List sources
 swift-mcp source list
