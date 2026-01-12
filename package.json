@@ -25,7 +25,10 @@
     "patreon",
     "youtube",
     "ai-assistant",
-    "development-tools"
+    "development-tools",
+    "claude",
+    "cursor",
+    "ai-coding"
   ],
   "author": "Lasha Efremidze",
   "license": "MIT",
