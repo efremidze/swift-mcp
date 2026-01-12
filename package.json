@@ -2,8 +2,20 @@
   "name": "swift-mcp",
   "version": "1.0.0",
   "description": "MCP server for Swift/SwiftUI learning with curated patterns from top iOS developers. Optional Patreon integration for premium content.",
+  "type": "module",
+  "bin": {
+    "swift-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "prepare": "npm run build",
+    "setup": "node build/cli/setup.js",
+    "source": "node build/cli/source-manager.js"
+  },
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "swift",
     "swiftui",
     "ios",
@@ -12,6 +24,31 @@
     "best-practices",
     "patreon",
     "youtube",
-    "ai-assistant"
-  ]
+    "ai-assistant",
+    "development-tools"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/swift-mcp.git"
+  },
+  "homepage": "https://github.com/yourusername/swift-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/swift-mcp/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "node-fetch": "^3.3.2",
+    "rss-parser": "^3.13.0",
+    "adm-zip": "^0.5.10",
+    "keytar": "^7.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
