@@ -5,7 +5,7 @@
 ### 1. Install
 
 ```bash
-npm install -g swift-mcp
+npm install -g @swift-learning/mcp
 ```
 
 ### 2. Use Immediately
@@ -35,7 +35,7 @@ Create `.cursor/mcp.json`:
   "mcpServers": {
     "swift": {
       "command": "npx",
-      "args": ["-y", "swift-mcp@latest"]
+      "args": ["-y", "@swift-learning/mcp@latest"]
     }
   }
 }
@@ -44,7 +44,7 @@ Create `.cursor/mcp.json`:
 #### Claude Code
 
 ```bash
-claude mcp add swift -- npx -y swift-mcp@latest
+claude mcp add swift -- npx -y @swift-learning/mcp@latest
 ```
 
 #### Windsurf
@@ -55,7 +55,7 @@ Create `.windsurf/mcp.json`:
   "mcpServers": {
     "swift": {
       "command": "npx",
-      "args": ["-y", "swift-mcp@latest"]
+      "args": ["-y", "@swift-learning/mcp@latest"]
     }
   }
 }
@@ -94,8 +94,8 @@ Try asking your AI assistant:
 
 ## 🆘 Need Help?
 
-- Documentation: [Full Docs](https://github.com/yourusername/swift-mcp)
-- Issues: [GitHub Issues](https://github.com/yourusername/swift-mcp/issues)
+- Documentation: [Full Docs](https://github.com/efremidze/swift-mcp)
+- Issues: [GitHub Issues](https://github.com/efremidze/swift-mcp/issues)
 
 ## 🔄 Next Steps
 
