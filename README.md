@@ -9,7 +9,6 @@ An MCP server that brings best practices from leading iOS developers directly to
 ### Always Available (Free)
 - ✅ Swift by Sundell articles
 - ✅ Antoine van der Lee tutorials  
-- ✅ Kavsoft YouTube videos
 - ✅ Point-Free open source
 
 ### Optional (Premium)
@@ -37,7 +36,6 @@ Always enabled, no authentication needed:
 |--------|--------------|------------------|
 | Swift by Sundell | Articles, patterns | Weekly |
 | Antoine van der Lee | Tutorials, tips | Weekly |
-| Kavsoft | YouTube videos | Weekly |
 | Point-Free | OSS repos | On release |
 
 ### Premium Sources
@@ -72,7 +70,6 @@ Optional, requires authentication:
   "sources": {
     "sundell": { "enabled": true },
     "vanderlee": { "enabled": true },
-    "kavsoft": { "enabled": true },
     "pointfree": { "enabled": true },
     "patreon": { "enabled": false }  // Optional
   }
@@ -90,31 +87,3 @@ swift-mcp source disable kavsoft
 # List sources
 swift-mcp source list
 ```
-
-## 🎯 Why This Approach?
-
-- ✅ **Works immediately** with free sources
-- ✅ **Optional premium** content via Patreon
-- ✅ **Future-proof** - easy to add more sources
-- ✅ **User choice** - enable what you want
-- ✅ **No vendor lock-in** - Patreon is optional
-```
-
----
-
-## 🎯 **My Final Recommendation**
-
-### **Name**: `swift-mcp`
-### **NPM**: `swift-mcp` (simple, memorable)
-
-**Architecture**:
-```
-Core (Always):
-├─ Free curated content
-├─ Pattern library
-└─ Quality filtering
-
-Plugins (Optional):
-├─ Patreon (OAuth)
-├─ GitHub Sponsors (future)
-└─ Gumroad (future)
