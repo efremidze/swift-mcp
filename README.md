@@ -6,14 +6,13 @@ An MCP server that brings best practices from leading iOS developers directly to
 
 ## 🌟 Features
 
-### Always Available (Free)
+### Built-in Sources
 - ✅ Swift by Sundell articles
 - ✅ Antoine van der Lee tutorials  
 - ✅ Point-Free open source
 
-### Optional (Premium)
+### Premium (Optional)
 - 🔐 **Patreon Integration** - Access content from creators you support
-- 🔐 **GitHub Sponsors** (Coming soon)
 
 ## 🚀 Quick Start
 ```bash
@@ -39,7 +38,7 @@ Always enabled, no authentication needed:
 | Point-Free | OSS repos | On release |
 
 ### Premium Sources
-Optional, requires authentication:
+Requires authentication:
 
 | Source | What You Get | Setup |
 |--------|--------------|-------|
