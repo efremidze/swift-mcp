@@ -31,11 +31,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/swift-mcp.git"
+    "url": "https://github.com/efremidze/swift-mcp.git"
   },
-  "homepage": "https://github.com/yourusername/swift-mcp#readme",
+  "homepage": "https://github.com/efremidze/swift-mcp#readme",
   "bugs": {
-    "url": "https://github.com/yourusername/swift-mcp/issues"
+    "url": "https://github.com/efremidze/swift-mcp/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
