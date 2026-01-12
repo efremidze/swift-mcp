@@ -18,7 +18,7 @@ An MCP server that brings best practices from leading iOS developers directly to
 ## 🚀 Quick Start
 ```bash
 # Install
-npm install -g swift-mcp
+npm install -g @efremidze/swift-mcp
 
 # Basic setup (free sources)
 swift-mcp setup
