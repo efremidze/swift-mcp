@@ -43,6 +43,11 @@ coverage/
 # MCP
 .swift-mcp/
 
+# Claude Code
+.claude/
+.gsd/
+.planning/
+
 # Secrets
 *.pem
 *.key
