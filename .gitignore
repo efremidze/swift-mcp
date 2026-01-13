@@ -47,6 +47,7 @@ coverage/
 .claude/
 .gsd/
 .planning/
+.worktrees/
 
 # Secrets
 *.pem
