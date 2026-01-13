@@ -2,6 +2,9 @@
 
 import http from "http"
 import { exec } from "child_process"
+import { promises as fs } from "fs"
+import { homedir } from "os"
+import { join } from "path"
 import keytar from "keytar"
 
 const SERVICE_NAME = "swift-mcp"
@@ -256,4 +259,25 @@ export async function startOAuthFlow(
       }
     }, 120000)
   })
+}
+
+// =============================================================================
+// Cleanup & Reset
+// =============================================================================
+
+/**
+ * Clear all Patreon authentication data (keytar + legacy tokens.json)
+ */
+export async function clearPatreonAuth(): Promise<void> {
+  // Clear from keytar
+  await keytar.deletePassword(SERVICE_NAME, "patreon")
+  await keytar.deletePassword(SERVICE_NAME, ACCOUNT_NAME)
+  
+  // Clear legacy tokens.json file
+  const tokensPath = join(homedir(), ".swift-mcp", "tokens.json")
+  try {
+    await fs.rm(tokensPath, { force: true })
+  } catch {
+    // Ignore if file doesn't exist
+  }
 }
