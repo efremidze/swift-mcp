@@ -97,7 +97,7 @@ async function setupPatreon(): Promise<void> {
       break;
     }
 
-    const nums = input.split(/[\s,]+/).map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+    const nums = input.split(/[\s,]+/).map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
 
     for (const num of nums) {
       if (num >= 1 && num <= allCreators.length) {
