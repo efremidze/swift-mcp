@@ -92,7 +92,7 @@ export async function downloadZip(
     }
 
     const contentLength = response.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > MAX_ZIP_SIZE) {
+    if (contentLength && parseInt(contentLength, 10) > MAX_ZIP_SIZE) {
       console.warn(`Zip file too large (${contentLength} bytes), skipping`);
       return null;
     }
