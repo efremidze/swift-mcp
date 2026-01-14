@@ -282,6 +282,8 @@ export class PatreonSource {
       ? [creatorId]
       : this.enabledCreators;
 
+    console.log(`Fetching patterns for ${creatorsToFetch.length} creators:`, creatorsToFetch);
+
     for (const cid of creatorsToFetch) {
       try {
         const posts = await this.fetchCreatorPosts(cid, accessToken);
@@ -303,12 +305,17 @@ export class PatreonSource {
     creatorId: string,
     accessToken: string
   ): Promise<PatreonPattern[]> {
-    const response = await fetch(
-      `${PATREON_API}/campaigns/${creatorId}/posts?fields[post]=title,content,url,published_at`,
-      { headers: { 'Authorization': `Bearer ${accessToken}` } }
-    );
+    const url = `${PATREON_API}/campaigns/${creatorId}/posts?fields[post]=title,content,url,published_at`;
+    console.log(`Fetching posts: ${url}`);
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`Failed to fetch posts: ${response.status}`);
+      console.error(`Response: ${errorBody}`);
       throw new Error(`Failed to fetch posts: ${response.status}`);
     }
 
@@ -316,6 +323,9 @@ export class PatreonSource {
       data: PatreonPost[];
       included?: Array<{ id: string; type: string; attributes: { url: string } }>;
     };
+
+    console.log(`Posts response: ${JSON.stringify(data, null, 2).slice(0, 500)}`);
+    console.log(`Found ${data.data?.length || 0} posts in response`);
 
     const patterns: PatreonPattern[] = [];
 
