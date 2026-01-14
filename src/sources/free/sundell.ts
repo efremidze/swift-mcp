@@ -1,6 +1,6 @@
 // src/sources/free/sundell.ts
 
-import Parser from 'rss-parser';
+import Parser, { Item } from 'rss-parser';
 
 export interface SundellPattern {
   id: string;
@@ -31,7 +31,7 @@ export class SundellSource {
     try {
       const feed = await this.parser.parseURL(this.feedUrl);
       
-      const patterns = feed.items.map((item: any) => {
+      const patterns = feed.items.map((item: Item) => {
         const content = item.content || item.contentSnippet || '';
         const text = `${item.title} ${content}`.toLowerCase();
         
