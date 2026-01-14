@@ -18,13 +18,13 @@ export const CREATORS: Creator[] = [
   {
     id: 'sucodee',
     name: "sucodee",
-    patreonCampaignId: '1464862',
+    patreonCampaignId: '9794927',
     youtubeChannelId: 'UC9YE4KZX3z89F0LkDRXjpJg',
   },
   {
     id: 'SwiftUICodes',
     name: 'SwiftUICodes',
-    patreonCampaignId: '3647993',
+    patreonCampaignId: '11011366',
     youtubeChannelId: 'UCvEdo8AyAUg_LqOr8rzTTbA',
   },
 ];
