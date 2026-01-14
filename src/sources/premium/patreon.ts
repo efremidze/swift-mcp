@@ -1,10 +1,8 @@
 // src/sources/premium/patreon.ts
 
-import {
-  getValidAccessToken,
-  loadTokens,
-} from './patreon-oauth.js';
-import { extractFromAttachment } from './patreon-zip.js';
+import { loadTokens, getValidAccessToken } from './patreon-oauth.js';
+import { getChannelVideos, searchVideos, Video } from './youtube.js';
+import { getByPatreonId } from '../../config/creators.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -23,24 +21,11 @@ export interface PatreonPattern {
   hasCode: boolean;
 }
 
-export interface Creator {
+export interface CreatorInfo {
   id: string;
   name: string;
   url: string;
   isSwiftRelated: boolean;
-}
-
-interface PatreonPost {
-  id: string;
-  attributes: {
-    title: string;
-    content: string;
-    url: string;
-    published_at: string;
-  };
-  relationships?: {
-    attachments?: { data: Array<{ id: string; type: string }> };
-  };
 }
 
 interface PatreonCampaign {
@@ -195,7 +180,7 @@ export class PatreonSource {
    * 
    * Correct API: GET /identity?include=memberships.campaign
    */
-  async getSubscribedCreators(): Promise<Creator[]> {
+  async getSubscribedCreators(): Promise<CreatorInfo[]> {
     const accessToken = await getValidAccessToken(this.clientId, this.clientSecret);
     if (!accessToken) return [];
 
@@ -222,6 +207,8 @@ export class PatreonSource {
         console.error('No memberships data in response. User may not have any active patron memberships.');
         return [];
       }
+
+      console.log(`Memberships response: ${JSON.stringify(data, null, 2).slice(0, 500)}`);
 
       // Extract active memberships and their campaigns
       const members = data.included.filter(
@@ -268,15 +255,12 @@ export class PatreonSource {
     }
   }
 
-  async detectSwiftCreators(): Promise<Creator[]> {
+  async detectSwiftCreators(): Promise<CreatorInfo[]> {
     const creators = await this.getSubscribedCreators();
     return creators.filter(c => c.isSwiftRelated);
   }
 
   async fetchPatterns(creatorId?: string): Promise<PatreonPattern[]> {
-    const accessToken = await getValidAccessToken(this.clientId, this.clientSecret);
-    if (!accessToken) return [];
-
     const patterns: PatreonPattern[] = [];
     const creatorsToFetch = creatorId
       ? [creatorId]
@@ -284,12 +268,23 @@ export class PatreonSource {
 
     console.log(`Fetching patterns for ${creatorsToFetch.length} creators:`, creatorsToFetch);
 
-    for (const cid of creatorsToFetch) {
+    for (const patreonId of creatorsToFetch) {
+      // Look up creator in registry to get YouTube channel
+      const creator = getByPatreonId(patreonId);
+      if (!creator?.youtubeChannelId) {
+        console.log(`No YouTube channel for creator ${patreonId}`);
+        continue;
+      }
+
       try {
-        const posts = await this.fetchCreatorPosts(cid, accessToken);
-        patterns.push(...posts);
+        const videos = await getChannelVideos(creator.youtubeChannelId, 50);
+        console.log(`Found ${videos.length} videos for ${creator.name}`);
+
+        for (const video of videos) {
+          patterns.push(this.videoToPattern(video, creator.name));
+        }
       } catch (error) {
-        console.error(`Failed to fetch posts for creator ${cid}:`, error);
+        console.error(`Failed to fetch videos for ${creator.name}:`, error);
       }
     }
 
@@ -301,110 +296,45 @@ export class PatreonSource {
     return patterns;
   }
 
-  private async fetchCreatorPosts(
-    creatorId: string,
-    accessToken: string
-  ): Promise<PatreonPattern[]> {
-    const url = `${PATREON_API}/campaigns/${creatorId}/posts?fields[post]=title,content,url,published_at`;
-    console.log(`Fetching posts: ${url}`);
+  private videoToPattern(video: Video, creatorName: string): PatreonPattern {
+    const text = `${video.title} ${video.description}`;
+    const topics = detectTopics(text);
+    const hasCode = hasCodeContent(video.description) || (video.codeLinks?.length ?? 0) > 0;
+    const relevanceScore = calculateRelevance(text, hasCode);
 
-    const response = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`Failed to fetch posts: ${response.status}`);
-      console.error(`Response: ${errorBody}`);
-      throw new Error(`Failed to fetch posts: ${response.status}`);
-    }
-
-    const data = await response.json() as {
-      data: PatreonPost[];
-      included?: Array<{ id: string; type: string; attributes: { url: string } }>;
+    return {
+      id: `yt-${video.id}`,
+      title: video.title,
+      url: video.patreonLink || `https://youtube.com/watch?v=${video.id}`,
+      publishDate: video.publishedAt,
+      excerpt: video.description.substring(0, 300),
+      content: video.description,
+      creator: creatorName,
+      topics,
+      relevanceScore,
+      hasCode,
     };
+  }
 
-    console.log(`Posts response: ${JSON.stringify(data, null, 2).slice(0, 500)}`);
-    console.log(`Found ${data.data?.length || 0} posts in response`);
-
+  async searchPatterns(query: string): Promise<PatreonPattern[]> {
     const patterns: PatreonPattern[] = [];
 
-    for (const post of data.data) {
-      const content = post.attributes.content || '';
-      const title = post.attributes.title || '';
+    // Search YouTube for each enabled creator
+    for (const patreonId of this.enabledCreators) {
+      const creator = getByPatreonId(patreonId);
+      if (!creator?.youtubeChannelId) continue;
 
-      // Extract from title first (metadata-first approach)
-      let topics = detectTopics(title);
-      if (topics.length === 0) {
-        // Fallback to content scanning
-        topics = detectTopics(content);
-      }
-
-      const hasCode = hasCodeContent(content);
-      const relevanceScore = calculateRelevance(`${title} ${content}`, hasCode);
-
-      patterns.push({
-        id: `patreon-${post.id}`,
-        title,
-        url: post.attributes.url,
-        publishDate: post.attributes.published_at,
-        excerpt: content.substring(0, 300),
-        content,
-        creator: creatorId,
-        topics,
-        relevanceScore,
-        hasCode,
-      });
-
-      // Check for zip attachments
-      if (post.relationships?.attachments?.data) {
-        for (const attachment of post.relationships.attachments.data) {
-          const included = data.included?.find(
-            i => i.id === attachment.id && i.type === 'attachment'
-          );
-          if (included?.attributes?.url?.endsWith('.zip')) {
-            const result = await extractFromAttachment(
-              included.attributes.url,
-              post.id,
-              accessToken
-            );
-            if (result.success) {
-              for (const extracted of result.patterns) {
-                const extractedRelevance = calculateRelevance(
-                  `${extracted.filename} ${extracted.content}`,
-                  extracted.hasCode
-                );
-                patterns.push({
-                  id: `patreon-${post.id}-${extracted.filename}`,
-                  title: `${title} - ${extracted.filename}`,
-                  url: post.attributes.url,
-                  publishDate: post.attributes.published_at,
-                  excerpt: extracted.content.substring(0, 300),
-                  content: extracted.content,
-                  creator: creatorId,
-                  topics: extracted.topics,
-                  relevanceScore: extractedRelevance,
-                  hasCode: extracted.hasCode,
-                });
-              }
-            }
-          }
+      try {
+        const videos = await searchVideos(query, creator.youtubeChannelId, 25);
+        for (const video of videos) {
+          patterns.push(this.videoToPattern(video, creator.name));
         }
+      } catch (error) {
+        console.error(`Search failed for ${creator.name}:`, error);
       }
     }
 
     return patterns;
-  }
-
-  async searchPatterns(query: string): Promise<PatreonPattern[]> {
-    const patterns = await this.fetchPatterns();
-    const lowerQuery = query.toLowerCase();
-
-    return patterns.filter(p =>
-      p.title.toLowerCase().includes(lowerQuery) ||
-      p.content.toLowerCase().includes(lowerQuery) ||
-      p.topics.some(t => t.includes(lowerQuery))
-    );
   }
 
   isAvailable(): boolean {
