@@ -27,10 +27,19 @@ const COOKIE_FILE = '.patreon-session';
 
   // No existing session, need to log in
   await page.goto('https://www.patreon.com/login');
-  console.log('Please log in, then press Enter in this terminal:');
-  await new Promise(resolve => process.stdin.once('data', resolve));
+  console.log('Please log in. Waiting for session cookie...');
 
-  const cookies = await context.cookies('https://www.patreon.com');
+  // Poll for session cookie instead of waiting for Enter
+  let cookies = await context.cookies('https://www.patreon.com');
+  let sessionCookie = cookies.find(c => c.name === 'session_id');
+
+  while (!sessionCookie) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    cookies = await context.cookies('https://www.patreon.com');
+    sessionCookie = cookies.find(c => c.name === 'session_id');
+  }
+
+  console.log('Login detected!');
 
   // Debug: log all cookie names
   console.log('Available cookies:', cookies.map(c => c.name).join(', '));
