@@ -1,36 +1,42 @@
 // src/config/creators.ts
-// Registry mapping Patreon campaigns to YouTube channels
+// Registry mapping creators to their Patreon and YouTube
 
 export interface Creator {
-  patreonId: string;
+  id: string;
   name: string;
-  youtube?: {
-    channelId: string;
-    handle?: string;
-  };
-  topics: string[];
+  patreonCampaignId: string;
+  youtubeChannelId?: string;
 }
 
 export const CREATORS: Creator[] = [
   {
-    patreonId: '5338573',
-    name: 'iOS App Development with SwiftUI',
-    youtube: {
-      channelId: 'UCsuV4MRk_aB291SrchUVb4w',  // TODO: Add channel ID
-      handle: 'Kavsoft',
-    },
-    topics: ['swift', 'swiftui', 'ios'],
+    id: 'kavsoft',
+    name: 'Kavsoft',
+    patreonCampaignId: '5338573',
+    youtubeChannelId: 'UCsuV4MRk_aB291SrchUVb4w',
+  },
+  {
+    id: 'sucodee',
+    name: "sucodee",
+    patreonCampaignId: '1464862',
+    youtubeChannelId: 'UC9YE4KZX3z89F0LkDRXjpJg',
+  },
+  {
+    id: 'SwiftUICodes',
+    name: 'SwiftUICodes',
+    patreonCampaignId: '3647993',
+    youtubeChannelId: 'UCvEdo8AyAUg_LqOr8rzTTbA',
   },
 ];
 
 export function getByPatreonId(id: string): Creator | undefined {
-  return CREATORS.find(c => c.patreonId === id);
+  return CREATORS.find(c => c.patreonCampaignId === id);
 }
 
 export function getByYouTubeChannel(channelId: string): Creator | undefined {
-  return CREATORS.find(c => c.youtube?.channelId === channelId);
+  return CREATORS.find(c => c.youtubeChannelId === channelId);
 }
 
 export function withYouTube(): Creator[] {
-  return CREATORS.filter(c => c.youtube?.channelId);
+  return CREATORS.filter(c => c.youtubeChannelId);
 }
