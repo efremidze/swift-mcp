@@ -10,9 +10,14 @@ import fs from 'fs';
   await new Promise(resolve => process.stdin.once('data', resolve));
 
   const cookies = await page.context().cookies();
+
+  // Debug: log all cookie names
+  console.log('Available cookies:', cookies.map(c => c.name).join(', '));
+
   const sessionCookie = cookies.find(c => c.name === 'session_id');
   if (!sessionCookie) {
     console.error('Session cookie not found!');
+    console.log('Full cookies:', JSON.stringify(cookies, null, 2));
     process.exit(1);
   }
 
