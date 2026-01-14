@@ -15,8 +15,8 @@ function getDownloadDir(): string {
 }
 
 function getCookiePath(): string {
-  const home = process.env.HOME || process.env.USERPROFILE || '';
-  return path.join(home, '.swift-mcp', 'patreon-cookie.txt');
+  // Use .patreon-session in project root (created by extract-cookie.ts)
+  return path.join(process.cwd(), '.patreon-session');
 }
 
 export interface DownloadedPost {
@@ -80,8 +80,8 @@ export async function downloadCreatorContent(
   try {
     console.log(`Downloading content for ${creatorName}...`);
 
-    // Run patreon-dl
-    const cmd = `npx patreon-dl -c "${cookie}" -o "${outDir}" "${creatorUrl}"`;
+    // Run patreon-dl with session_id cookie format
+    const cmd = `npx patreon-dl -c "session_id=${cookie}" -o "${outDir}" "${creatorUrl}"`;
     await execAsync(cmd, { timeout: 300000 }); // 5 min timeout
 
     return { success: true };
