@@ -3,6 +3,9 @@
 import http from 'http';
 import { exec } from 'child_process';
 import { URL } from 'url';
+import { join } from 'path';
+import { homedir } from 'os';
+import fs from 'fs/promises';
 import keytar from 'keytar';
 
 const SERVICE_NAME = 'swift-mcp';
