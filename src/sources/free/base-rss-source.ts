@@ -45,7 +45,7 @@ export abstract class BaseRSSSource<T extends RSSPattern> {
     
     try {
       const feed = await this.parser.parseURL(this.feedUrl);
-      const patterns = feed.items.map((item: Item) => this.transformItem(item));
+      const patterns = feed.items.map(item => this.transformItem(item));
       
       this.cachedPatterns = patterns;
       this.lastFetchTime = Date.now();

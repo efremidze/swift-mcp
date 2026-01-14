@@ -37,8 +37,8 @@ function getCacheDir(): string {
 function sanitizeFilename(filename: string): string {
   // Remove any path components, keep only the basename
   const basename = path.basename(filename);
-  // Remove any remaining potentially dangerous characters including path separators
-  return basename.replace(/[<>:"|?*\\/]/g, '_');
+  // Remove dangerous characters: path separators, wildcards, null bytes, and control characters
+  return basename.replace(/[<>:"|?*\\/\0\x00-\x1f\x7f]/g, '_');
 }
 
 function detectFileType(filename: string): ExtractedPattern['type'] {

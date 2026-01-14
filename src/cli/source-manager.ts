@@ -139,7 +139,11 @@ const sourceId = args[1];
         process.exit(command ? 1 : 0);
     }
   } catch (error) {
-    console.error('Error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`❌ Command failed: ${errorMessage}`);
+    if (process.env.DEBUG) {
+      console.error('Stack trace:', error);
+    }
     process.exit(1);
   }
 })();
