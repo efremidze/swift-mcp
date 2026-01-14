@@ -1,56 +1,37 @@
 // src/sources/free/sundell.ts
 
-import Parser from 'rss-parser';
+import { Item } from 'rss-parser';
+import { BaseRSSSource, RSSPattern } from './base-rss-source.js';
 
-export interface SundellPattern {
-  id: string;
-  title: string;
-  url: string;
-  publishDate: string;
-  excerpt: string;
-  content: string;
-  topics: string[];
-  relevanceScore: number;
-  hasCode: boolean;
-}
+export interface SundellPattern extends RSSPattern {}
 
-export class SundellSource {
-  private parser = new Parser();
-  private feedUrl = 'https://www.swiftbysundell.com/feed.xml';
+export class SundellSource extends BaseRSSSource<SundellPattern> {
+  protected feedUrl = 'https://www.swiftbysundell.com/feed.xml';
   
-  async fetchPatterns(): Promise<SundellPattern[]> {
-    try {
-      const feed = await this.parser.parseURL(this.feedUrl);
-      
-      return feed.items.map(item => {
-        const content = item.content || item.contentSnippet || '';
-        const text = `${item.title} ${content}`.toLowerCase();
-        
-        // Detect topics
-        const topics = this.detectTopics(text);
-        
-        // Calculate relevance for iOS development
-        const relevanceScore = this.calculateRelevance(text);
-        
-        // Detect code presence
-        const hasCode = this.hasCodeContent(content);
-        
-        return {
-          id: `sundell-${item.guid || item.link}`,
-          title: item.title || '',
-          url: item.link || '',
-          publishDate: item.pubDate || '',
-          excerpt: (item.contentSnippet || '').substring(0, 300),
-          content: content,
-          topics,
-          relevanceScore,
-          hasCode,
-        };
-      });
-    } catch (error) {
-      console.error('Failed to fetch Sundell content:', error);
-      return [];
-    }
+  protected transformItem(item: Item): SundellPattern {
+    const content = item.content || item.contentSnippet || '';
+    const text = `${item.title} ${content}`.toLowerCase();
+    
+    // Detect topics
+    const topics = this.detectTopics(text);
+    
+    // Calculate relevance for iOS development
+    const relevanceScore = this.calculateRelevance(text);
+    
+    // Detect code presence
+    const hasCode = this.hasCodeContent(content);
+    
+    return {
+      id: `sundell-${item.guid || item.link}`,
+      title: item.title || '',
+      url: item.link || '',
+      publishDate: item.pubDate || '',
+      excerpt: (item.contentSnippet || '').substring(0, 300),
+      content: content,
+      topics,
+      relevanceScore,
+      hasCode,
+    };
   }
   
   private detectTopics(text: string): string[] {
@@ -98,23 +79,6 @@ export class SundellSource {
     }
     
     return Math.min(100, score);
-  }
-  
-  private hasCodeContent(content: string): boolean {
-    return content.includes('<code>') || 
-           content.includes('```') ||
-           /\b(func|class|struct|protocol|extension)\s+\w+/.test(content);
-  }
-  
-  async searchPatterns(query: string): Promise<SundellPattern[]> {
-    const patterns = await this.fetchPatterns();
-    const lowerQuery = query.toLowerCase();
-    
-    return patterns.filter(p =>
-      p.title.toLowerCase().includes(lowerQuery) ||
-      p.content.toLowerCase().includes(lowerQuery) ||
-      p.topics.some(t => t.includes(lowerQuery))
-    );
   }
 }
 

@@ -1,51 +1,32 @@
 // src/sources/free/vanderlee.ts
 
-import Parser from 'rss-parser';
+import { Item } from 'rss-parser';
+import { BaseRSSSource, RSSPattern } from './base-rss-source.js';
 
-export interface VanderLeePattern {
-  id: string;
-  title: string;
-  url: string;
-  publishDate: string;
-  excerpt: string;
-  content: string;
-  topics: string[];
-  relevanceScore: number;
-  hasCode: boolean;
-}
+export interface VanderLeePattern extends RSSPattern {}
 
-export class VanderLeeSource {
-  private parser = new Parser();
-  private feedUrl = 'https://www.avanderlee.com/feed/';
+export class VanderLeeSource extends BaseRSSSource<VanderLeePattern> {
+  protected feedUrl = 'https://www.avanderlee.com/feed/';
   
-  async fetchPatterns(): Promise<VanderLeePattern[]> {
-    try {
-      const feed = await this.parser.parseURL(this.feedUrl);
-      
-      return feed.items.map(item => {
-        const content = item.content || item.contentSnippet || '';
-        const text = `${item.title} ${content}`.toLowerCase();
-        
-        const topics = this.detectTopics(text);
-        const relevanceScore = this.calculateRelevance(text);
-        const hasCode = this.hasCodeContent(content);
-        
-        return {
-          id: `vanderlee-${item.guid || item.link}`,
-          title: item.title || '',
-          url: item.link || '',
-          publishDate: item.pubDate || '',
-          excerpt: (item.contentSnippet || '').substring(0, 300),
-          content: content,
-          topics,
-          relevanceScore,
-          hasCode,
-        };
-      });
-    } catch (error) {
-      console.error('Failed to fetch van der Lee content:', error);
-      return [];
-    }
+  protected transformItem(item: Item): VanderLeePattern {
+    const content = item.content || item.contentSnippet || '';
+    const text = `${item.title} ${content}`.toLowerCase();
+    
+    const topics = this.detectTopics(text);
+    const relevanceScore = this.calculateRelevance(text);
+    const hasCode = this.hasCodeContent(content);
+    
+    return {
+      id: `vanderlee-${item.guid || item.link}`,
+      title: item.title || '',
+      url: item.link || '',
+      publishDate: item.pubDate || '',
+      excerpt: (item.contentSnippet || '').substring(0, 300),
+      content: content,
+      topics,
+      relevanceScore,
+      hasCode,
+    };
   }
   
   private detectTopics(text: string): string[] {
@@ -92,23 +73,6 @@ export class VanderLeeSource {
     }
     
     return Math.min(100, score);
-  }
-  
-  private hasCodeContent(content: string): boolean {
-    return content.includes('<code>') || 
-           content.includes('```') ||
-           /\b(func|class|struct|protocol)\s+\w+/.test(content);
-  }
-  
-  async searchPatterns(query: string): Promise<VanderLeePattern[]> {
-    const patterns = await this.fetchPatterns();
-    const lowerQuery = query.toLowerCase();
-    
-    return patterns.filter(p =>
-      p.title.toLowerCase().includes(lowerQuery) ||
-      p.content.toLowerCase().includes(lowerQuery) ||
-      p.topics.some(t => t.includes(lowerQuery))
-    );
   }
 }
 
