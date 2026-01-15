@@ -2,6 +2,7 @@
 
 import Parser from 'rss-parser';
 import { rssCache, articleCache } from '../../utils/cache.js';
+import { SearchIndex, combineScores } from '../../utils/search.js';
 
 const RSS_CACHE_TTL = 3600; // 1 hour for RSS feeds
 const ARTICLE_CACHE_TTL = 86400; // 24 hours for full articles
@@ -250,13 +251,24 @@ export class VanderLeeSource {
 
   async searchPatterns(query: string): Promise<VanderLeePattern[]> {
     const patterns = await this.fetchPatterns();
-    const lowerQuery = query.toLowerCase();
 
-    return patterns.filter(p =>
-      p.title.toLowerCase().includes(lowerQuery) ||
-      p.content.toLowerCase().includes(lowerQuery) ||
-      p.topics.some(t => t.includes(lowerQuery))
-    );
+    // Use advanced search with fuzzy matching, TF-IDF, and stemming
+    const searchIndex = new SearchIndex<VanderLeePattern>(['title', 'content', 'topics']);
+    searchIndex.addDocuments(patterns);
+
+    const results = searchIndex.search(query, {
+      fuzzy: 0.2,  // Allow ~20% character difference for typo tolerance
+      boost: { title: 2.5, topics: 1.8, content: 1 },
+    });
+
+    // Combine search relevance with static relevance scores
+    // Sort by combined score
+    return results
+      .map(result => ({
+        ...result.item,
+        relevanceScore: combineScores(result.score, result.item.relevanceScore),
+      }))
+      .sort((a, b) => b.relevanceScore - a.relevanceScore);
   }
 }
 
