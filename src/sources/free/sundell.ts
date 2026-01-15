@@ -1,6 +1,9 @@
 // src/sources/free/sundell.ts
 
 import Parser from 'rss-parser';
+import { rssCache } from '../../utils/cache.js';
+
+const CACHE_TTL = 3600; // 1 hour for RSS feeds
 
 export interface SundellPattern {
   id: string;
@@ -20,9 +23,16 @@ export class SundellSource {
   
   async fetchPatterns(): Promise<SundellPattern[]> {
     try {
+      // Use cached patterns if available
+      const cacheKey = 'sundell-patterns';
+      const cached = await rssCache.get<SundellPattern[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const feed = await this.parser.parseURL(this.feedUrl);
-      
-      return feed.items.map(item => {
+
+      const patterns = feed.items.map(item => {
         const content = item.content || item.contentSnippet || '';
         const text = `${item.title} ${content}`.toLowerCase();
 
@@ -47,6 +57,10 @@ export class SundellSource {
           hasCode,
         };
       });
+
+      // Cache the results
+      await rssCache.set(cacheKey, patterns, CACHE_TTL);
+      return patterns;
     } catch (error) {
       console.error('Failed to fetch Sundell content:', error);
       return [];

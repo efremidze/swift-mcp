@@ -1,6 +1,10 @@
 // src/sources/free/vanderlee.ts
 
 import Parser from 'rss-parser';
+import { rssCache, articleCache } from '../../utils/cache.js';
+
+const RSS_CACHE_TTL = 3600; // 1 hour for RSS feeds
+const ARTICLE_CACHE_TTL = 86400; // 24 hours for full articles
 
 export interface VanderLeePattern {
   id: string;
@@ -20,13 +24,22 @@ export class VanderLeeSource {
 
   async fetchPatterns(): Promise<VanderLeePattern[]> {
     try {
+      // Use cached patterns if available
+      const cacheKey = 'vanderlee-patterns';
+      const cached = await rssCache.get<VanderLeePattern[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const feed = await this.parser.parseURL(this.feedUrl);
 
-      // Fetch full content for all articles in parallel (limited concurrency)
+      // Fetch full content for all articles in parallel
       const patterns = await Promise.all(
         feed.items.map(item => this.processArticle(item))
       );
 
+      // Cache the results
+      await rssCache.set(cacheKey, patterns, RSS_CACHE_TTL);
       return patterns;
     } catch (error) {
       console.error('Failed to fetch van der Lee content:', error);
@@ -68,6 +81,12 @@ export class VanderLeeSource {
   }
 
   private async fetchArticleContent(url: string): Promise<string> {
+    // Check article cache first
+    const cached = await articleCache.get<string>(url);
+    if (cached) {
+      return cached;
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
@@ -84,7 +103,11 @@ export class VanderLeeSource {
       }
 
       const html = await response.text();
-      return this.extractPostContent(html);
+      const content = this.extractPostContent(html);
+
+      // Cache the extracted content
+      await articleCache.set(url, content, ARTICLE_CACHE_TTL);
+      return content;
     } finally {
       clearTimeout(timeout);
     }
