@@ -155,6 +155,23 @@ Create or edit `.windsurf/mcp.json`:
 }
 ```
 
+#### VS Code
+
+For VS Code, use an MCP-compatible extension like [Cline](https://github.com/cline/cline) or similar MCP clients. Configure in your extension's MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "swift": {
+      "command": "npx",
+      "args": ["-y", "@efremidze/swift-mcp@latest"]
+    }
+  }
+}
+```
+
+Refer to your MCP extension's documentation for the exact configuration location.
+
 ### Verify Installation
 
 ```bash
