@@ -3,6 +3,9 @@
 import AdmZip from 'adm-zip';
 import fs from 'fs';
 import path from 'path';
+import { getCacheDir } from '../../utils/paths.js';
+import { detectTopics, hasCodeContent } from '../../utils/swift-analysis.js';
+import { BASE_TOPIC_KEYWORDS, mergeKeywords } from '../../config/swift-keywords.js';
 
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_FILES = 100;
@@ -21,14 +24,16 @@ export interface ZipExtractionResult {
   warnings: string[];
 }
 
-function getSwiftMcpDir(): string {
-  const home = process.env.HOME || process.env.USERPROFILE || '';
-  return path.join(home, '.swift-mcp');
-}
+// Zip-specific keywords (extends base with more detailed patterns)
+const zipSpecificTopics: Record<string, string[]> = {
+  'concurrency': ['sendable'], // Adds to base
+  'networking': ['request'], // Adds to base
+  'testing': ['stub'], // Adds to base
+  'architecture': ['repository', 'usecase'], // Adds to base
+  'uikit': ['uitableview', 'uicollectionview'], // Adds to base
+};
 
-function getCacheDir(): string {
-  return path.join(getSwiftMcpDir(), 'cache', 'zips');
-}
+const zipTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, zipSpecificTopics);
 
 function detectFileType(filename: string): ExtractedPattern['type'] {
   const ext = path.extname(filename).toLowerCase();
@@ -40,40 +45,12 @@ function detectFileType(filename: string): ExtractedPattern['type'] {
   }
 }
 
-function detectTopics(content: string, filename: string): string[] {
-  const text = `${filename} ${content}`.toLowerCase();
-  const topics: string[] = [];
-
-  const keywords: Record<string, string[]> = {
-    'swiftui': ['swiftui', '@state', '@binding', '@observable', 'view'],
-    'concurrency': ['async', 'await', 'actor', 'task', 'sendable'],
-    'networking': ['urlsession', 'network', 'api', 'http', 'request'],
-    'testing': ['xctest', 'test', 'mock', 'stub'],
-    'architecture': ['mvvm', 'coordinator', 'repository', 'usecase'],
-    'uikit': ['uikit', 'uiview', 'uitableview', 'uicollectionview'],
-  };
-
-  for (const [topic, words] of Object.entries(keywords)) {
-    if (words.some(w => text.includes(w))) {
-      topics.push(topic);
-    }
-  }
-
-  return topics;
-}
-
-function hasCodeContent(content: string): boolean {
-  return /\b(func|class|struct|protocol|extension|enum)\s+\w+/.test(content) ||
-         content.includes('```swift') ||
-         content.includes('```');
-}
-
 export async function downloadZip(
   url: string,
   postId: string,
   accessToken: string
 ): Promise<string | null> {
-  const cacheDir = getCacheDir();
+  const cacheDir = getCacheDir('zips');
   const zipPath = path.join(cacheDir, `${postId}.zip`);
 
   // Check if already cached
@@ -114,7 +91,7 @@ export function extractZip(zipPath: string, postId: string): ZipExtractionResult
   const warnings: string[] = [];
   const patterns: ExtractedPattern[] = [];
 
-  const destDir = path.join(getCacheDir(), postId);
+  const destDir = path.join(getCacheDir('zips'), postId);
 
   try {
     const zip = new AdmZip(zipPath);
@@ -140,7 +117,8 @@ export function extractZip(zipPath: string, postId: string): ZipExtractionResult
 
       try {
         const content = entry.getData().toString('utf8');
-        const topics = detectTopics(content, filename);
+        const text = `${filename} ${content}`;
+        const topics = detectTopics(text, zipTopicKeywords);
         const hasCode = hasCodeContent(content);
 
         patterns.push({
@@ -186,7 +164,7 @@ export async function extractFromAttachment(
 }
 
 export function clearZipCache(): void {
-  const cacheDir = getCacheDir();
+  const cacheDir = getCacheDir('zips');
   if (fs.existsSync(cacheDir)) {
     fs.rmSync(cacheDir, { recursive: true });
   }

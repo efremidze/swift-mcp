@@ -4,6 +4,9 @@ import { loadTokens, getValidAccessToken } from './patreon-oauth.js';
 import { getChannelVideos, searchVideos, Video } from './youtube.js';
 import { scanDownloadedContent, DownloadedPost } from './patreon-dl.js';
 import { getByPatreonId } from '../../config/creators.js';
+import { getPatreonCreatorsPath } from '../../utils/paths.js';
+import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
+import { BASE_TOPIC_KEYWORDS, BASE_QUALITY_SIGNALS, mergeKeywords, mergeQualitySignals } from '../../config/swift-keywords.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -58,77 +61,25 @@ interface PatreonIdentityResponse {
   included?: Array<PatreonMember | PatreonCampaign>;
 }
 
-function getSwiftMcpDir(): string {
-  const home = process.env.HOME || process.env.USERPROFILE || '';
-  return path.join(home, '.swift-mcp');
-}
+// Patreon-specific keywords (extends base)
+const patreonSpecificTopics: Record<string, string[]> = {
+  'swiftui': ['@observable'], // Adds to base
+  'architecture': ['clean architecture'], // Adds to base
+};
 
-function getConfigPath(): string {
-  return path.join(getSwiftMcpDir(), 'patreon-creators.json');
-}
+const patreonSpecificSignals: Record<string, number> = {
+  'swift': 10,
+  'ios': 8,
+  'pattern': 6,
+  'best practice': 8,
+};
 
-function detectTopics(text: string): string[] {
-  const topics: string[] = [];
-  const lower = text.toLowerCase();
+const patreonTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, patreonSpecificTopics);
+const patreonQualitySignals = mergeQualitySignals(BASE_QUALITY_SIGNALS, patreonSpecificSignals);
 
-  const keywords: Record<string, string[]> = {
-    'swiftui': ['swiftui', '@state', '@binding', '@observable'],
-    'concurrency': ['async', 'await', 'actor', 'task'],
-    'networking': ['urlsession', 'network', 'api call'],
-    'testing': ['xctest', 'unit test', 'mock'],
-    'architecture': ['mvvm', 'coordinator', 'clean architecture'],
-    'uikit': ['uikit', 'uiview', 'autolayout'],
-  };
-
-  for (const [topic, words] of Object.entries(keywords)) {
-    if (words.some(w => lower.includes(w))) {
-      topics.push(topic);
-    }
-  }
-
-  return topics;
-}
-
-function hasCodeContent(content: string): boolean {
-  return /\b(func|class|struct|protocol|extension)\s+\w+/.test(content) ||
-         content.includes('```');
-}
-
-function calculateRelevance(text: string, hasCode: boolean): number {
-  const lower = text.toLowerCase();
-  let score = 0;
-
-  // High-value keywords
-  const keywords: Record<string, number> = {
-    'swift': 10,
-    'swiftui': 10,
-    'ios': 8,
-    'testing': 7,
-    'architecture': 7,
-    'pattern': 6,
-    'best practice': 8,
-    'tutorial': 5,
-    'example': 4,
-    'async': 6,
-    'await': 6,
-    'actor': 6,
-    'protocol': 5,
-    'generic': 5,
-  };
-
-  for (const [keyword, points] of Object.entries(keywords)) {
-    if (lower.includes(keyword)) {
-      score += points;
-    }
-  }
-
-  // Bonus for code content
-  if (hasCode) {
-    score += 15;
-  }
-
-  return Math.min(100, score);
-}
+// Patreon-specific scoring constants
+const PATREON_CODE_BONUS = 15; // Higher bonus for code-heavy Patreon content
+const PATREON_BASE_SCORE = 0; // Start at 0 for Patreon to rely on quality signals
 
 function isSwiftRelated(name: string, summary?: string): boolean {
   const text = `${name} ${summary || ''}`.toLowerCase();
@@ -150,7 +101,7 @@ export class PatreonSource {
 
   private loadEnabledCreators(): void {
     try {
-      const configPath = getConfigPath();
+      const configPath = getPatreonCreatorsPath();
       if (fs.existsSync(configPath)) {
         const data = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
         this.enabledCreators = data.enabledCreators || [];
@@ -162,7 +113,7 @@ export class PatreonSource {
 
   saveEnabledCreators(creatorIds: string[]): void {
     this.enabledCreators = creatorIds;
-    const configPath = getConfigPath();
+    const configPath = getPatreonCreatorsPath();
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, JSON.stringify({ enabledCreators: creatorIds }, null, 2));
   }
@@ -333,9 +284,9 @@ export class PatreonSource {
 
       const content = file.content || '';
       const text = `${file.filename} ${content}`;
-      const topics = detectTopics(text);
+      const topics = detectTopics(text, patreonTopicKeywords);
       const hasCode = file.type === 'swift' || hasCodeContent(content);
-      const relevanceScore = calculateRelevance(text, hasCode);
+      const relevanceScore = calculateRelevance(text, hasCode, patreonQualitySignals, PATREON_BASE_SCORE, PATREON_CODE_BONUS);
 
       patterns.push({
         id: `dl-${post.postId}-${file.filename}`,
@@ -357,9 +308,9 @@ export class PatreonSource {
 
   private videoToPattern(video: Video, creatorName: string): PatreonPattern {
     const text = `${video.title} ${video.description}`;
-    const topics = detectTopics(text);
+    const topics = detectTopics(text, patreonTopicKeywords);
     const hasCode = hasCodeContent(video.description) || (video.codeLinks?.length ?? 0) > 0;
-    const relevanceScore = calculateRelevance(text, hasCode);
+    const relevanceScore = calculateRelevance(text, hasCode, patreonQualitySignals, PATREON_BASE_SCORE, PATREON_CODE_BONUS);
 
     return {
       id: `yt-${video.id}`,
