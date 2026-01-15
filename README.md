@@ -20,6 +20,7 @@
 - [Quick Start](#-quick-start)
 - [Installation](#-installation)
 - [Configuration](#-configuration)
+- [Environment Variables](#-environment-variables)
 - [Usage Examples](#-usage-examples)
 - [Content Sources](#-content-sources)
 - [Premium Integration](#-premium-integration-optional)
@@ -216,6 +217,113 @@ The configuration file is automatically created at `~/.swift-mcp/config.json`:
 | `enabled` | boolean | `true` | Enable/disable a source |
 | `quality` | number | `60` | Minimum quality score (0-100) |
 | `cache.ttl` | number | `86400` | Cache time-to-live in seconds |
+
+## 🔑 Environment Variables
+
+swift-mcp uses environment variables for optional premium features. Free sources work without any configuration.
+
+### Available Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PATREON_CLIENT_ID` | For Patreon | OAuth client ID from Patreon Developer Portal |
+| `PATREON_CLIENT_SECRET` | For Patreon | OAuth client secret from Patreon Developer Portal |
+| `YOUTUBE_API_KEY` | For YouTube | Google API key for YouTube content (coming soon) |
+
+### Setting Variables in MCP Client Config (Recommended)
+
+The recommended way to configure environment variables is through your MCP client's configuration file. This passes variables directly to the swift-mcp server.
+
+#### Cursor
+
+```json
+{
+  "mcpServers": {
+    "swift": {
+      "command": "npx",
+      "args": ["-y", "@efremidze/swift-mcp@latest"],
+      "env": {
+        "PATREON_CLIENT_ID": "your_client_id",
+        "PATREON_CLIENT_SECRET": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
+#### Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "swift": {
+      "command": "npx",
+      "args": ["-y", "@efremidze/swift-mcp@latest"],
+      "env": {
+        "PATREON_CLIENT_ID": "your_client_id",
+        "PATREON_CLIENT_SECRET": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
+#### Windsurf
+
+```json
+{
+  "mcpServers": {
+    "swift": {
+      "command": "npx",
+      "args": ["-y", "@efremidze/swift-mcp@latest"],
+      "env": {
+        "PATREON_CLIENT_ID": "your_client_id",
+        "PATREON_CLIENT_SECRET": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
+#### VS Code
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "swift": {
+        "command": "npx",
+        "args": ["-y", "@efremidze/swift-mcp@latest"],
+        "env": {
+          "PATREON_CLIENT_ID": "your_client_id",
+          "PATREON_CLIENT_SECRET": "your_client_secret"
+        }
+      }
+    }
+  }
+}
+```
+
+### Local Development
+
+For local development and testing, you can use a `.env` file in the project root:
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Add your credentials:
+   ```bash
+   # .env
+   PATREON_CLIENT_ID=your_client_id
+   PATREON_CLIENT_SECRET=your_client_secret
+   YOUTUBE_API_KEY=your_api_key
+   ```
+
+3. The `.env` file is automatically loaded when running the server locally.
+
+> **Note:** Never commit `.env` files to version control. The `.env` file is already in `.gitignore`.
 
 ## 💡 Usage Examples
 
