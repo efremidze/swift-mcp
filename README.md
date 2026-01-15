@@ -66,7 +66,6 @@ Whether you're building a new iOS app or looking for solutions to common Swift p
 ### Premium Sources (Optional)
 
 - 🔐 **Patreon Integration** - Access premium content from creators you support
-- 🚀 **GitHub Sponsors** *(Coming Soon)* - Support open source and get exclusive patterns
 
 ## 📋 Prerequisites
 
@@ -260,7 +259,6 @@ Requires authentication and active subscriptions:
 | Source | What You Get | Setup Method | Status |
 |--------|--------------|--------------|--------|
 | **Patreon** | Premium content from iOS creators | OAuth 2.0 | ✅ Available |
-| **GitHub Sponsors** | Exclusive patterns from sponsored devs | OAuth 2.0 | 🚧 Coming Soon |
 
 ## 🔐 Premium Integration (Optional)
 
@@ -357,7 +355,6 @@ graph LR
     C --> F[van der Lee RSS]
     C --> G[Point-Free GitHub]
     D --> H[Patreon API]
-    D --> I[GitHub Sponsors API]
 ```
 
 1. **AI Assistant Query**: Your AI assistant sends a query through the MCP protocol
@@ -443,10 +440,10 @@ swift-mcp setup
 
 ### Future Plans (v2.x)
 
-- [ ] GitHub Sponsors integration
-- [ ] YouTube transcript extraction
-- [ ] Conference talk indexing
-- [ ] Multi-language support
+- [ ] Additional premium source integrations
+- [ ] More free content sources (developer blogs, newsletters)
+- [ ] Advanced content discovery and recommendations
+- [ ] Better content filtering and categorization
 - [ ] Local content caching improvements
 - [ ] Advanced search with vector embeddings
 - [ ] Custom source plugins
