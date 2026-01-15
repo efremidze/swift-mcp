@@ -45,6 +45,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "adm-zip": "^0.5.10",
+    "dotenv": "^17.2.3",
     "keytar": "^7.9.0",
     "node-fetch": "^3.3.2",
     "patreon-dl": "^3.5.0",
