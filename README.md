@@ -179,7 +179,7 @@ The configuration file is automatically created at `~/.swift-mcp/config.json`:
       "quality": 60
     },
     "pointfree": { 
-      "enabled": true,
+      "enabled": false,
       "quality": 60
     },
     "patreon": { 
@@ -244,7 +244,7 @@ Once installed, ask your AI assistant natural questions:
 
 ### Free Sources
 
-Always enabled, no authentication needed:
+Currently supported, no authentication needed:
 
 | Source | Creator | Content Type | Update Frequency |
 |--------|---------|--------------|------------------|
@@ -490,7 +490,6 @@ npm run watch
 - 🐛 Bug fixes and testing
 - 📝 Documentation improvements
 - 🎨 Adding new content sources
-- 🌍 Internationalization
 - ⚡ Performance optimization
 
 ### Code of Conduct
