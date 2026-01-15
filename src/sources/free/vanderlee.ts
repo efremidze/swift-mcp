@@ -25,10 +25,14 @@ export class VanderLeeSource {
       return feed.items.map(item => {
         const content = item.content || item.contentSnippet || '';
         const text = `${item.title} ${content}`.toLowerCase();
-        
+
         const topics = this.detectTopics(text);
-        const relevanceScore = this.calculateRelevance(text);
+
+        // Detect code presence first (needed for relevance)
         const hasCode = this.hasCodeContent(content);
+
+        // Calculate relevance
+        const relevanceScore = this.calculateRelevance(text, hasCode);
         
         return {
           id: `vanderlee-${item.guid || item.link}`,
@@ -70,34 +74,88 @@ export class VanderLeeSource {
     return detected;
   }
   
-  private calculateRelevance(text: string): number {
-    let score = 0;
-    
-    const keywords = {
-      'swift': 10,
-      'swiftui': 10,
-      'ios': 8,
+  private calculateRelevance(text: string, hasCode: boolean): number {
+    // Base score: van der Lee is a known high-quality source
+    let score = 50;
+
+    // Content quality signals
+    const qualitySignals = {
+      // Technical depth
+      'how to': 5,
+      'step by step': 5,
+      'tutorial': 5,
+      'guide': 4,
+      'example': 4,
+      'tip': 3,
+      'fix': 4,
+      'solve': 4,
+
+      // Performance & debugging (van der Lee specialties)
       'performance': 8,
       'memory': 7,
       'debugging': 7,
-      'xcode': 6,
-      'practical': 7,
-      'tips': 5,
+      'leak': 6,
+      'optimization': 7,
+      'profiling': 6,
+
+      // Advanced topics
+      'concurrency': 7,
+      'async': 6,
+      'await': 6,
+      'combine': 6,
+
+      // Frameworks & tools
+      'swiftui': 6,
+      'xcode': 5,
+      'instruments': 6,
+      'ci': 4,
+      'fastlane': 4,
     };
-    
-    for (const [keyword, points] of Object.entries(keywords)) {
+
+    for (const [keyword, points] of Object.entries(qualitySignals)) {
       if (text.includes(keyword)) {
         score += points;
       }
     }
-    
+
+    // Bonus for code examples
+    if (hasCode) {
+      score += 10;
+    }
+
     return Math.min(100, score);
   }
   
   private hasCodeContent(content: string): boolean {
-    return content.includes('<code>') || 
-           content.includes('```') ||
-           /\b(func|class|struct|protocol)\s+\w+/.test(content);
+    // HTML code tags
+    if (content.includes('<code>') || content.includes('<pre>')) {
+      return true;
+    }
+
+    // Markdown code blocks
+    if (content.includes('```')) {
+      return true;
+    }
+
+    // Swift declarations
+    if (/\b(func|class|struct|protocol|extension|enum|actor)\s+\w+/.test(content)) {
+      return true;
+    }
+
+    // Swift keywords that indicate code
+    const codeIndicators = [
+      /\blet\s+\w+\s*[=:]/, // let x = or let x:
+      /\bvar\s+\w+\s*[=:]/, // var x = or var x:
+      /\breturn\s+\w+/,     // return value
+      /\bguard\s+let/,      // guard let
+      /\bif\s+let/,         // if let
+      /\basync\s+(func|let|var|throws)/, // async patterns
+      /\bawait\s+\w+/,      // await calls
+      /\b\w+\s*\(\s*\)\s*->\s*\w+/, // function signatures
+      /@\w+\s+(struct|class|func|var)/, // property wrappers
+    ];
+
+    return codeIndicators.some(pattern => pattern.test(content));
   }
   
   async searchPatterns(query: string): Promise<VanderLeePattern[]> {
