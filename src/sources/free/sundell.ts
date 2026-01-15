@@ -1,6 +1,9 @@
 // src/sources/free/sundell.ts
 
 import Parser from 'rss-parser';
+import { rssCache } from '../../utils/cache.js';
+
+const CACHE_TTL = 3600; // 1 hour for RSS feeds
 
 export interface SundellPattern {
   id: string;
@@ -16,24 +19,31 @@ export interface SundellPattern {
 
 export class SundellSource {
   private parser = new Parser();
-  private feedUrl = 'https://www.swiftbysundell.com/feed.xml';
+  private feedUrl = 'https://www.swiftbysundell.com/feed.rss';
   
   async fetchPatterns(): Promise<SundellPattern[]> {
     try {
+      // Use cached patterns if available
+      const cacheKey = 'sundell-patterns';
+      const cached = await rssCache.get<SundellPattern[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const feed = await this.parser.parseURL(this.feedUrl);
-      
-      return feed.items.map(item => {
+
+      const patterns = feed.items.map(item => {
         const content = item.content || item.contentSnippet || '';
         const text = `${item.title} ${content}`.toLowerCase();
-        
+
         // Detect topics
         const topics = this.detectTopics(text);
-        
-        // Calculate relevance for iOS development
-        const relevanceScore = this.calculateRelevance(text);
-        
-        // Detect code presence
+
+        // Detect code presence first (needed for relevance)
         const hasCode = this.hasCodeContent(content);
+
+        // Calculate relevance for iOS development
+        const relevanceScore = this.calculateRelevance(text, hasCode);
         
         return {
           id: `sundell-${item.guid || item.link}`,
@@ -47,6 +57,10 @@ export class SundellSource {
           hasCode,
         };
       });
+
+      // Cache the results
+      await rssCache.set(cacheKey, patterns, CACHE_TTL);
+      return patterns;
     } catch (error) {
       console.error('Failed to fetch Sundell content:', error);
       return [];
@@ -75,35 +89,84 @@ export class SundellSource {
     return detected;
   }
   
-  private calculateRelevance(text: string): number {
-    let score = 0;
-    
-    // High-value keywords
-    const keywords = {
-      'swift': 10,
-      'swiftui': 10,
-      'ios': 8,
-      'testing': 7,
-      'architecture': 7,
+  private calculateRelevance(text: string, hasCode: boolean): number {
+    // Base score: Sundell is a known high-quality source
+    let score = 50;
+
+    // Content quality signals
+    const qualitySignals = {
+      // Technical depth
+      'how to': 5,
+      'step by step': 5,
+      'tutorial': 5,
+      'guide': 4,
+      'example': 4,
       'pattern': 6,
       'best practice': 8,
-      'tutorial': 5,
-      'example': 4,
+      'tip': 3,
+
+      // Advanced topics
+      'architecture': 8,
+      'testing': 7,
+      'performance': 7,
+      'concurrency': 7,
+      'async': 6,
+      'await': 6,
+      'actor': 6,
+      'protocol': 5,
+      'generic': 5,
+
+      // Frameworks
+      'swiftui': 6,
+      'combine': 6,
+      'uikit': 5,
+      'foundation': 4,
     };
-    
-    for (const [keyword, points] of Object.entries(keywords)) {
+
+    for (const [keyword, points] of Object.entries(qualitySignals)) {
       if (text.includes(keyword)) {
         score += points;
       }
     }
-    
+
+    // Bonus for code examples
+    if (hasCode) {
+      score += 10;
+    }
+
     return Math.min(100, score);
   }
   
   private hasCodeContent(content: string): boolean {
-    return content.includes('<code>') || 
-           content.includes('```') ||
-           /\b(func|class|struct|protocol|extension)\s+\w+/.test(content);
+    // HTML code tags
+    if (content.includes('<code>') || content.includes('<pre>')) {
+      return true;
+    }
+
+    // Markdown code blocks
+    if (content.includes('```')) {
+      return true;
+    }
+
+    // Swift declarations
+    if (/\b(func|class|struct|protocol|extension|enum|actor)\s+\w+/.test(content)) {
+      return true;
+    }
+
+    // Swift keywords that indicate code
+    const codeIndicators = [
+      /\blet\s+\w+\s*[=:]/, // let x = or let x:
+      /\bvar\s+\w+\s*[=:]/, // var x = or var x:
+      /\breturn\s+\w+/,     // return value
+      /\bguard\s+let/,      // guard let
+      /\bif\s+let/,         // if let
+      /\basync\s+(func|let|var|throws)/, // async patterns
+      /\bawait\s+\w+/,      // await calls
+      /\b\w+\s*\(\s*\)\s*->\s*\w+/, // function signatures
+      /@\w+\s+(struct|class|func|var)/, // property wrappers
+    ];
+
+    return codeIndicators.some(pattern => pattern.test(content));
   }
   
   async searchPatterns(query: string): Promise<SundellPattern[]> {
