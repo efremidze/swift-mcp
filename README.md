@@ -228,7 +228,7 @@ swift-mcp uses environment variables for optional premium features. Free sources
 |----------|----------|-------------|
 | `PATREON_CLIENT_ID` | For Patreon | OAuth client ID from Patreon Developer Portal |
 | `PATREON_CLIENT_SECRET` | For Patreon | OAuth client secret from Patreon Developer Portal |
-| `YOUTUBE_API_KEY` | For YouTube | Google API key for YouTube content (coming soon) |
+| `YOUTUBE_API_KEY` | For YouTube | Google API key for YouTube content |
 
 ### Setting Variables in MCP Client Config (Recommended)
 
