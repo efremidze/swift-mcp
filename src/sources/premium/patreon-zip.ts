@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { getCacheDir } from '../../utils/paths.js';
 import { detectTopics, hasCodeContent } from '../../utils/swift-analysis.js';
+import { BASE_TOPIC_KEYWORDS, mergeKeywords } from '../../config/swift-keywords.js';
 
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_FILES = 100;
@@ -23,15 +24,16 @@ export interface ZipExtractionResult {
   warnings: string[];
 }
 
-// Topic detection keywords for zip content
-const zipTopicKeywords: Record<string, string[]> = {
-  'swiftui': ['swiftui', '@state', '@binding', '@observable', 'view'],
-  'concurrency': ['async', 'await', 'actor', 'task', 'sendable'],
-  'networking': ['urlsession', 'network', 'api', 'http', 'request'],
-  'testing': ['xctest', 'test', 'mock', 'stub'],
-  'architecture': ['mvvm', 'coordinator', 'repository', 'usecase'],
-  'uikit': ['uikit', 'uiview', 'uitableview', 'uicollectionview'],
+// Zip-specific keywords (extends base with more detailed patterns)
+const zipSpecificTopics: Record<string, string[]> = {
+  'concurrency': ['sendable'], // Adds to base
+  'networking': ['request'], // Adds to base
+  'testing': ['stub'], // Adds to base
+  'architecture': ['repository', 'usecase'], // Adds to base
+  'uikit': ['uitableview', 'uicollectionview'], // Adds to base
 };
+
+const zipTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, zipSpecificTopics);
 
 function detectFileType(filename: string): ExtractedPattern['type'] {
   const ext = path.extname(filename).toLowerCase();

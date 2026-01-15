@@ -6,6 +6,7 @@ import { scanDownloadedContent, DownloadedPost } from './patreon-dl.js';
 import { getByPatreonId } from '../../config/creators.js';
 import { getPatreonCreatorsPath } from '../../utils/paths.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
+import { BASE_TOPIC_KEYWORDS, BASE_QUALITY_SIGNALS, mergeKeywords, mergeQualitySignals } from '../../config/swift-keywords.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -60,33 +61,21 @@ interface PatreonIdentityResponse {
   included?: Array<PatreonMember | PatreonCampaign>;
 }
 
-// Topic detection keywords for Patreon content
-const patreonTopicKeywords: Record<string, string[]> = {
-  'swiftui': ['swiftui', '@state', '@binding', '@observable'],
-  'concurrency': ['async', 'await', 'actor', 'task'],
-  'networking': ['urlsession', 'network', 'api call'],
-  'testing': ['xctest', 'unit test', 'mock'],
-  'architecture': ['mvvm', 'coordinator', 'clean architecture'],
-  'uikit': ['uikit', 'uiview', 'autolayout'],
+// Patreon-specific keywords (extends base)
+const patreonSpecificTopics: Record<string, string[]> = {
+  'swiftui': ['@observable'], // Adds to base
+  'architecture': ['clean architecture'], // Adds to base
 };
 
-// Quality signals for Patreon content
-const patreonQualitySignals: Record<string, number> = {
+const patreonSpecificSignals: Record<string, number> = {
   'swift': 10,
-  'swiftui': 10,
   'ios': 8,
-  'testing': 7,
-  'architecture': 7,
   'pattern': 6,
   'best practice': 8,
-  'tutorial': 5,
-  'example': 4,
-  'async': 6,
-  'await': 6,
-  'actor': 6,
-  'protocol': 5,
-  'generic': 5,
 };
+
+const patreonTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, patreonSpecificTopics);
+const patreonQualitySignals = mergeQualitySignals(BASE_QUALITY_SIGNALS, patreonSpecificSignals);
 
 function isSwiftRelated(name: string, summary?: string): boolean {
   const text = `${name} ${summary || ''}`.toLowerCase();

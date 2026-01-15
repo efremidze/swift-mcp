@@ -1,51 +1,34 @@
 // src/sources/free/vanderlee.ts
 
 import { RssPatternSource, BasePattern } from './rssPatternSource.js';
+import { BASE_TOPIC_KEYWORDS, BASE_QUALITY_SIGNALS, mergeKeywords, mergeQualitySignals } from '../../config/swift-keywords.js';
 
 export interface VanderLeePattern extends BasePattern {}
 
-const vanderleeTopicKeywords: Record<string, string[]> = {
+// VanderLee-specific topic keywords (extends base)
+const vanderleeSpecificTopics: Record<string, string[]> = {
   'debugging': ['debug', 'breakpoint', 'lldb', 'xcode'],
-  'performance': ['performance', 'memory', 'leak', 'optimization'],
-  'swiftui': ['swiftui', 'view', 'state', 'binding'],
   'combine': ['combine', 'publisher', 'subscriber'],
-  'concurrency': ['async', 'await', 'actor', 'task'],
-  'testing': ['test', 'xctest', 'mock'],
   'tooling': ['xcode', 'git', 'ci', 'fastlane'],
+  'performance': ['leak', 'profiling'], // Adds to base performance keywords
 };
 
-const vanderleeQualitySignals: Record<string, number> = {
-  // Technical depth
-  'how to': 5,
-  'step by step': 5,
-  'tutorial': 5,
-  'guide': 4,
-  'example': 4,
-  'tip': 3,
+// VanderLee-specific quality signals (extends base, emphasizes performance & debugging)
+const vanderleeSpecificSignals: Record<string, number> = {
   'fix': 4,
   'solve': 4,
-
-  // Performance & debugging (van der Lee specialties)
-  'performance': 8,
   'memory': 7,
   'debugging': 7,
   'leak': 6,
-  'optimization': 7,
   'profiling': 6,
-
-  // Advanced topics
-  'concurrency': 7,
-  'async': 6,
-  'await': 6,
-  'combine': 6,
-
-  // Frameworks & tools
-  'swiftui': 6,
   'xcode': 5,
   'instruments': 6,
   'ci': 4,
   'fastlane': 4,
 };
+
+const vanderleeTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, vanderleeSpecificTopics);
+const vanderleeQualitySignals = mergeQualitySignals(BASE_QUALITY_SIGNALS, vanderleeSpecificSignals);
 
 function extractPostContent(html: string): string {
   // Extract content from post-content div
