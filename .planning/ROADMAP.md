@@ -1,0 +1,116 @@
+# Roadmap: swift-mcp Improvements
+
+## Overview
+
+Improve swift-mcp from working prototype to production-ready MCP server. Focus on reliability (error handling, OAuth), maintainability (tests, refactoring), and usability (better responses).
+
+## Domain Expertise
+
+None (TypeScript/Node.js project, standard patterns)
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+- [ ] **Phase 1: Foundation & Error Handling** - Consistent error handling, structured logging
+- [ ] **Phase 2: Test Infrastructure** - Test coverage for utilities and core logic
+- [ ] **Phase 3: MCP Tool Refactoring** - Extract handlers from monolithic index.ts
+- [ ] **Phase 4: Patreon OAuth Hardening** - Robust OAuth flow, token refresh edge cases
+- [ ] **Phase 5: Search & Response Quality** - Better MCP responses, improved search
+- [ ] **Phase 6: Premium Source Testing** - Test coverage for Patreon/YouTube
+
+## Phase Details
+
+### Phase 1: Foundation & Error Handling
+**Goal**: Establish consistent error handling strategy and add structured logging
+**Depends on**: Nothing (first phase)
+**Research**: Unlikely (internal patterns, standard logging libraries)
+**Plans**: TBD
+
+Key work:
+- Add structured logging (pino or similar)
+- Establish error handling patterns (log + graceful degradation)
+- Fix inconsistent error handling across modules
+- Files affected: `src/sources/free/rssPatternSource.ts`, `src/utils/cache.ts`, `src/sources/premium/youtube.ts`
+
+### Phase 2: Test Infrastructure
+**Goal**: Add test coverage for utilities and core analysis logic
+**Depends on**: Phase 1
+**Research**: Unlikely (standard vitest patterns)
+**Plans**: TBD
+
+Key work:
+- Tests for `src/utils/cache.ts`
+- Tests for `src/utils/search.ts`
+- Tests for `src/utils/swift-analysis.ts`
+- Add coverage reporting to vitest config
+
+### Phase 3: MCP Tool Refactoring
+**Goal**: Extract tool handlers from monolithic 515-line index.ts
+**Depends on**: Phase 2
+**Research**: Unlikely (internal refactoring)
+**Plans**: TBD
+
+Key work:
+- Extract tool handlers to `src/tools/handlers/`
+- Use factory pattern or registry for tool registration
+- Fix type safety in dynamic imports (remove `any` types)
+- Maintain backward compatibility for tool names
+
+### Phase 4: Patreon OAuth Hardening
+**Goal**: Make OAuth flow robust and handle edge cases
+**Depends on**: Phase 3
+**Research**: Likely (OAuth 2.0 best practices)
+**Research topics**: OAuth refresh token patterns, error recovery, token expiry handling
+**Plans**: TBD
+
+Key work:
+- Fix shell command injection risk in `patreon-oauth.ts`
+- Improve token refresh error handling
+- Handle redirect URI mismatch edge cases
+- Better error messages for OAuth failures
+
+### Phase 5: Search & Response Quality
+**Goal**: Improve MCP tool response quality and search relevance
+**Depends on**: Phase 4
+**Research**: Likely (MCP response patterns)
+**Research topics**: MCP response best practices, MiniSearch optimization, response formatting
+**Plans**: TBD
+
+Key work:
+- Optimize string concatenation in search (cache normalized content)
+- Better structured responses from MCP tools
+- Fix N+1 pattern in creator scanning
+- Improve search result relevance
+
+### Phase 6: Premium Source Testing
+**Goal**: Add test coverage for Patreon and YouTube integrations
+**Depends on**: Phase 5
+**Research**: Unlikely (mocking patterns)
+**Plans**: TBD
+
+Key work:
+- Mock OAuth flow for testing
+- Mock Patreon API responses
+- Mock YouTube API responses
+- Integration test patterns for external services
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Foundation & Error Handling | 0/TBD | Not started | - |
+| 2. Test Infrastructure | 0/TBD | Not started | - |
+| 3. MCP Tool Refactoring | 0/TBD | Not started | - |
+| 4. Patreon OAuth Hardening | 0/TBD | Not started | - |
+| 5. Search & Response Quality | 0/TBD | Not started | - |
+| 6. Premium Source Testing | 0/TBD | Not started | - |
+
+---
+
+*Roadmap created: 2026-01-16*
