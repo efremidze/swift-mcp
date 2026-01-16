@@ -39,6 +39,9 @@ npm-debug.log*
 coverage/
 .nyc_output/
 
+# Git keep files
+*.gitkeep
+
 # MCP
 .swift-mcp/
 
