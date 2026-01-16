@@ -40,8 +40,9 @@ swift-mcp/
 │   │   ├── search.ts                # Search functionality
 │   │   └── source-manager.ts        # Source management
 │   │
-│   └── cli/                          # CLI commands (TODO)
+│   └── cli/                          # CLI commands
 │       ├── setup.ts                 # Setup wizard
+│       ├── auth.ts                  # Authentication utilities
 │       └── source-manager.ts        # Source enable/disable
 │
 ├── build/                            # Compiled TypeScript (generated)
@@ -109,11 +110,12 @@ swift-mcp/
 | `search.ts` | Handle search_swift_content tool |
 | `source-manager.ts` | Handle source management tools |
 
-### `/src/cli` (TODO)
+### `/src/cli`
 
 | File | Purpose |
 |------|---------|
 | `setup.ts` | Interactive setup wizard |
+| `auth.ts` | Reset Patreon authentication data |
 | `source-manager.ts` | CLI for managing sources |
 
 ## Configuration Files
@@ -225,7 +227,6 @@ Everything else is optional enhancements!
 ## Next Files to Create (Priority Order)
 
 1. **High Priority** (Core functionality)
-   - [ ] `src/cli/setup.ts` - Setup wizard
    - [ ] `src/sources/premium/patreon.ts` - Patreon integration
    - [ ] `src/sources/premium/patreon-oauth.ts` - OAuth handler
 
