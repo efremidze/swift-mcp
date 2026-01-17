@@ -13,10 +13,12 @@ export interface ToolContext {
 
 /**
  * Tool response format matching MCP SDK expectations
+ * Index signature allows additional SDK-required properties
  */
 export interface ToolResponse {
   content: Array<{ type: string; text: string }>;
   isError?: boolean;
+  [key: string]: unknown;
 }
 
 /**
