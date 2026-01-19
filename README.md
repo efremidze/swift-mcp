@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/node/v/@efremidze/swift-mcp)](https://nodejs.org)
 
-**An MCP server that brings best practices from leading iOS developers directly to your AI assistant.**
+**An MCP server delivering high-quality Swift, SwiftUI, and iOS code from top iOS developers to your AI assistant.**
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Examples](#-usage-examples) • [Contributing](#-contributing)
 
