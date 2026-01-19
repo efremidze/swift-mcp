@@ -17,10 +17,10 @@ import { getHandler, ToolContext } from './tools/index.js';
 
 // Premium sources (imported conditionally)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let PatreonSource: any = null;
+let patreonSource: any = null;
 try {
   const module = await import("./sources/premium/patreon.js");
-  PatreonSource = module.PatreonSource;
+  patreonSource = module.PatreonSource;
 } catch {
   // Patreon not available
 }
