@@ -560,17 +560,6 @@ npm run build
 npm run watch
 ```
 
-### Areas We Need Help
-
-- 🐛 Bug fixes and testing
-- 📝 Documentation improvements
-- 🎨 Adding new content sources
-- ⚡ Performance optimization
-
-### Code of Conduct
-
-Please be respectful and constructive. We're here to build something great together!
-
 ## 📄 License
 
 MIT License - Copyright (c) 2026 Lasha Efremidze
