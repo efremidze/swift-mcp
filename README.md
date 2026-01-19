@@ -216,8 +216,8 @@ For premium features, add to your MCP client config:
 ### With Patreon Integration
 
 ```
-"Show me advanced SwiftUI patterns from my Patreon"
-"Get the latest content from creators I support"
+"Show me advanced SwiftUI patterns"
+"How do I build a photo editor app?"
 ```
 
 ## 📚 Content Sources
