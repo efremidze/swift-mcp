@@ -137,10 +137,19 @@ Or manually add to **Cursor Settings** → **Tools** → **MCP Servers**:
 }
 ```
 
-#### Claude Desktop
+Alternatively, add the following to your `~/.cursor/mcp.json` file. To learn more, see the Cursor documentation.
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+#### Claude Code
 
+Run this command in your terminal:
+
+```bash
+claude mcp add swift -- npx -y @efremidze/swift-mcp@latest
+```
+
+Or manually add to your project's `.mcp.json` file:
+
+`.mcp.json`
 ```json
 {
   "mcpServers": {
@@ -151,11 +160,16 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   }
 }
 ```
+
+After adding the configuration, restart Claude Code and run /mcp to see the HeroUI MCP server in the list. If you see Connected, you're ready to use it.
+
+See the Claude Code MCP documentation for more details.
 
 #### Windsurf
 
-Create or edit `.windsurf/mcp.json`:
+Add the HeroUI server to your project's `.windsurf/mcp.json` configuration file:
 
+`.windsurf/mcp.json`
 ```json
 {
   "mcpServers": {
@@ -167,10 +181,15 @@ Create or edit `.windsurf/mcp.json`:
 }
 ```
 
+After adding the configuration, restart Windsurf to activate the MCP server.
+
+See the Windsurf MCP documentation for more details.
+
 #### VS Code
 
-Add to your VS Code MCP config:
+To configure MCP in VS Code with GitHub Copilot, add the swift-mcp server to your project's `.vscode/mcp.json` configuration file:
 
+`.vscode/mcp.json`
 ```json
 {
   "mcp": {
@@ -183,6 +202,10 @@ Add to your VS Code MCP config:
   }
 }
 ```
+
+After adding the configuration, open `.vscode/mcp.json` and click Start next to the heroui-react server.
+
+See the VS Code MCP documentation for more details.
 
 ### Verify Installation
 
