@@ -255,6 +255,8 @@ Follow the interactive wizard to:
 2. Configure credentials
 3. Complete authentication
 
+📖 **Detailed Guide**: [Patreon Setup Documentation](docs/PATREON_SETUP.md)
+
 #### Requirements
 
 - Active Patreon account with at least one iOS creator subscription
@@ -265,22 +267,6 @@ Follow the interactive wizard to:
 
 Patreon requires OAuth apps to be registered by creators. You don't need to launch a creator page or become an active creator - just register as one to create an OAuth app for personal use.
 
-#### Setup Steps
-
-1. **Start the setup wizard:**
-   ```bash
-   swift-mcp setup --patreon
-   ```
-
-2. **Follow the interactive prompts** to:
-   - Create a Patreon OAuth application
-   - Set up redirect URIs
-   - Configure credentials
-
-3. **Complete OAuth authentication** in your browser
-
-4. **Start using premium content** immediately!
-
 #### What You Get
 
 - ✅ Access to premium tutorials and patterns from creators you support
@@ -288,8 +274,6 @@ Patreon requires OAuth apps to be registered by creators. You don't need to laun
 - ✅ Quality filtering and advanced search
 - ✅ Multi-creator support
 - ✅ Private, secure authentication
-
-📖 **Detailed Guide**: [Patreon Setup Documentation](docs/PATREON_SETUP.md)
 
 ## ⚙️ Commands
 
