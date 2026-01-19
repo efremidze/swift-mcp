@@ -581,28 +581,14 @@ MIT License - Copyright (c) 2024 Lasha Efremidze
 
 ## 🙏 Credits
 
-### Created By
+**Created by** [Lasha Efremidze](https://github.com/efremidze)
 
-**Lasha Efremidze** - [GitHub](https://github.com/efremidze)
+**Content Sources**
+- [John Sundell](https://swiftbysundell.com) - Swift by Sundell
+- [Antoine van der Lee](https://www.avanderlee.com) - SwiftLee
+- [Point-Free](https://www.pointfree.co) - Advanced Swift education
 
-### Built With
-
-- [Model Context Protocol](https://modelcontextprotocol.io) - The protocol enabling AI-to-tool communication
-- [TypeScript](https://www.typescriptlang.org) - Language and tooling
-- [rss-parser](https://github.com/rbren/rss-parser) - RSS feed parsing
-- [Patreon API](https://www.patreon.com/platform/documentation/api) - Premium content integration
-
-### Content Sources
-
-Special thanks to the iOS developers and educators whose content makes this possible:
-
-- 🌟 [John Sundell](https://swiftbysundell.com) - Swift by Sundell
-- 🌟 [Antoine van der Lee](https://www.avanderlee.com) - SwiftLee
-- 🌟 [Point-Free](https://www.pointfree.co) - Advanced Swift education
-
-### Inspiration
-
-This project was inspired by the need to bring expert iOS knowledge directly into AI-assisted development workflows.
+**Built with** [Model Context Protocol](https://modelcontextprotocol.io)
 
 ---
 
