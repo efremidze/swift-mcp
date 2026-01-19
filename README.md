@@ -380,21 +380,6 @@ swift-mcp setup
 
 We welcome contributions! See our [contributing guidelines](CONTRIBUTING.md).
 
-```bash
-# Clone your fork
-git clone https://github.com/YOUR_USERNAME/swift-mcp.git
-cd swift-mcp
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# Run in development mode
-npm run watch
-```
-
 ## 📄 License
 
 MIT License - Copyright (c) 2026 Lasha Efremidze
