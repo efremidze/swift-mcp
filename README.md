@@ -8,30 +8,9 @@
 
 **An MCP server providing curated Swift and SwiftUI best practices from leading iOS developers, including patterns and real-world code examples from Swift by Sundell, SwiftLee, and other trusted sources.**
 
-[Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Examples](#-usage-examples) • [Contributing](#-contributing)
+[Quick Start](#-quick-start) • [Features](#-features) • [Usage](#-usage-examples) • [Contributing](#-contributing)
 
 ---
-
-## 📖 Table of Contents
-
-- [About](#-about)
-- [Features](#-features)
-- [Prerequisites](#-prerequisites)
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Environment Variables](#-environment-variables)
-- [Usage Examples](#-usage-examples)
-- [Content Sources](#-content-sources)
-- [Premium Integration](#-premium-integration-optional)
-- [Commands](#-commands)
-- [How It Works](#-how-it-works)
-- [Troubleshooting](#-troubleshooting)
-- [Documentation](#-documentation)
-- [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Credits](#-credits)
 
 ## 🎯 About
 
@@ -45,7 +24,7 @@ Whether you're building a new iOS app or looking for solutions to common Swift p
 - ✅ **Always Up-to-Date**: Automatically fetches the latest articles and patterns
 - ✅ **MCP Native**: Works seamlessly with Claude, Cursor, Windsurf, and other MCP-compatible tools
 - ✅ **Privacy First**: Free sources require no authentication
-- ✅ **Extensible**: Optional Patreon integration for premium content you already support
+- ✅ **Extensible**: Optional Patreon integration for premium content
 
 ## 🌟 Features
 
@@ -59,59 +38,21 @@ Whether you're building a new iOS app or looking for solutions to common Swift p
 - ⚡ **Fast Performance**: Efficient caching and indexed search
 
 ### Built-in Sources (Free)
-
 - ✅ **Swift by Sundell** - Articles, patterns, and best practices
 - ✅ **Antoine van der Lee** - Tutorials, tips, and deep dives
 - ✅ **Point-Free** - Open source libraries and patterns
 
 ### Premium Sources (Optional)
-
 - 🔐 **Patreon Integration** - Access premium content from creators you support
 
 ## 📋 Prerequisites
 
-Before installing swift-mcp, ensure you have:
-
-- **Node.js**: Version 18.0.0 or higher ([Download](https://nodejs.org))
-- **npm**: Comes with Node.js
-- **MCP-Compatible AI Assistant**: Such as:
-  - [Claude Desktop](https://claude.ai/desktop)
-  - [Cursor](https://cursor.sh)
-  - [Windsurf](https://codeium.com/windsurf)
-  - Any tool supporting the [Model Context Protocol](https://modelcontextprotocol.io)
+- **Node.js**: Version 18.0.0 or higher
+- **MCP-Compatible AI Assistant**: Claude Desktop, Cursor, Windsurf, or VS Code with Copilot
 
 ## 🚀 Quick Start
 
-Get started in less than 2 minutes:
-
-```bash
-# Install globally
-npm install -g @efremidze/swift-mcp
-
-# That's it! Free sources work immediately with no configuration needed
-```
-
-### Add to Claude Code (Fastest)
-
-If you use Claude Code, you can add the server in one command:
-
-```bash
-claude mcp add swift -- npx -y @efremidze/swift-mcp@latest
-```
-
-### Test It Out
-
-In your AI assistant (Cursor, Claude, etc.), try:
-
-```
-"Show me SwiftUI animation patterns"
-```
-
-You'll get curated patterns from Swift by Sundell, Antoine van der Lee, and other top sources!
-
-## 📦 Installation
-
-### Global Installation (Recommended)
+### Install
 
 ```bash
 npm install -g @efremidze/swift-mcp
