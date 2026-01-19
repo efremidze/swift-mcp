@@ -368,13 +368,6 @@ swift-mcp setup
 - [ ] Advanced search with vector embeddings
 - [ ] Custom source plugins
 
-### Long-term Vision
-
-- [ ] Community-contributed sources
-- [ ] Pattern recommendation engine
-- [ ] Code snippet validation
-- [ ] Integration with Xcode
-- [ ] Swift package ecosystem integration
 
 ## 🤝 Contributing
 
