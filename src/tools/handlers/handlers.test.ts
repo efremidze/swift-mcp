@@ -71,7 +71,7 @@ describe('getSwiftPatternHandler', () => {
   beforeEach(() => {
     context = {
       sourceManager: createMockSourceManager() as any,
-      PatreonSource: null,
+      patreonSource: null,
     };
   });
 
@@ -131,7 +131,7 @@ describe('searchSwiftContentHandler', () => {
   beforeEach(() => {
     context = {
       sourceManager: createMockSourceManager() as any,
-      PatreonSource: null,
+      patreonSource: null,
     };
   });
 
@@ -167,7 +167,7 @@ describe('listContentSourcesHandler', () => {
   beforeEach(() => {
     context = {
       sourceManager: createMockSourceManager() as any,
-      PatreonSource: null,
+      patreonSource: null,
     };
   });
 
@@ -199,7 +199,7 @@ describe('enableSourceHandler', () => {
   beforeEach(() => {
     context = {
       sourceManager: createMockSourceManager() as any,
-      PatreonSource: null,
+      patreonSource: null,
     };
   });
 
