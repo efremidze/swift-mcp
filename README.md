@@ -345,17 +345,10 @@ graph LR
 node --version  # Should be >= 18.0.0
 ```
 
-#### Configuration Issues
-
 **Sources not returning results**
 ```bash
-# Verify sources are enabled
 swift-mcp source list
-
-# Check configuration file exists
 ls ~/.swift-mcp/config.json
-
-# Re-run setup if needed
 swift-mcp setup
 ```
 
