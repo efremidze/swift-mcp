@@ -4,7 +4,7 @@
   "description": "MCP server for Swift/SwiftUI learning with curated patterns from top iOS developers. Optional Patreon integration for premium content.",
   "type": "module",
   "bin": {
-    "swift-mcp": "./build/index.js"
+    "swift-mcp": "build/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -37,7 +37,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/efremidze/swift-mcp.git"
+    "url": "git+https://github.com/efremidze/swift-mcp.git"
   },
   "homepage": "https://github.com/efremidze/swift-mcp#readme",
   "bugs": {
