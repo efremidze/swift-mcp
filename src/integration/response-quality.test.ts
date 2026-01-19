@@ -1,7 +1,11 @@
 // src/integration/response-quality.test.ts
 // End-to-end tests validating response quality for AI assistant consumption
+// Skipped on CI due to native dependency issues (keytar)
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
+const isCI = process.env.CI === 'true';
+const describeIntegration = isCI ? describe.skip : describe;
 import { spawn, ChildProcess } from 'child_process';
 import * as readline from 'readline';
 import * as path from 'path';
@@ -87,7 +91,7 @@ class MCPClient {
   }
 }
 
-describe('Response Quality Validation', () => {
+describeIntegration('Response Quality Validation', () => {
   let client: MCPClient;
 
   beforeAll(async () => {
