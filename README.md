@@ -573,7 +573,7 @@ Please be respectful and constructive. We're here to build something great toget
 
 ## 📄 License
 
-MIT License - Copyright (c) 2024 Lasha Efremidze
+MIT License - Copyright (c) 2026 Lasha Efremidze
 
 ## 🙏 Credits
 
