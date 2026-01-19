@@ -2,23 +2,13 @@
 
 ### 🎯 Curated Swift/SwiftUI Patterns from Top iOS Developers
 
-[![NPM Version](https://img.shields.io/npm/v/@efremidze/swift-mcp)](https://www.npmjs.com/package/@efremidze/swift-mcp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node Version](https://img.shields.io/node/v/@efremidze/swift-mcp)](https://nodejs.org)
-
-**An MCP server providing curated Swift and SwiftUI best practices from leading iOS developers, including patterns and real-world code examples from Swift by Sundell, SwiftLee, and other trusted sources.**
+**An MCP server that provides curated Swift and SwiftUI expertise from top iOS developers like John Sundell and Antoine van der Lee, including patterns, best practices, and real-world code examples.**
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Usage](#-usage-examples) • [Contributing](#-contributing)
 
 ---
 
-## 🎯 About
-
-**swift-mcp** is a Model Context Protocol (MCP) server that provides your AI assistant with access to curated Swift and SwiftUI patterns, best practices, and code examples from top iOS developers and educators.
-
-Whether you're building a new iOS app or looking for solutions to common Swift problems, swift-mcp gives your AI assistant the knowledge to provide expert-level guidance based on real-world patterns from the Swift community.
-
-### Why swift-mcp?
+## Why swift-mcp?
 
 - ✅ **Curated Content**: Only high-quality patterns from trusted iOS developers
 - ✅ **Always Up-to-Date**: Automatically fetches the latest articles and patterns
@@ -30,10 +20,10 @@ Whether you're building a new iOS app or looking for solutions to common Swift p
 
 ### Core Features
 
-- 🎓 **Expert Knowledge Base**: Access patterns from Swift by Sundell, Antoine van der Lee, and more
+- 🎓 **Expert Knowledge Base**: Provides patterns from Swift by Sundell, Antoine van der Lee, and more
 - 🔍 **Intelligent Search**: Query by topic, pattern, or specific iOS concepts
 - 🎯 **Quality Filtering**: Configurable quality thresholds ensure only the best content
-- 📚 **Multiple Sources**: Aggregate knowledge from various trusted educators
+- 📚 **Multiple Sources**: Aggregates knowledge from various trusted educators
 - 🔄 **Auto-Updates**: Content automatically refreshes from RSS feeds
 - ⚡ **Fast Performance**: Efficient caching and indexed search
 
@@ -150,7 +140,7 @@ See the VS Code MCP documentation for more details.
 
 ### Test It Out
 
-In your AI assistant, try:
+Try these queries:
 
 ```
 "Show me SwiftUI animation patterns"
@@ -305,11 +295,11 @@ graph LR
     D --> H[Patreon API]
 ```
 
-1. **AI Assistant Query**: Your AI assistant sends a query through the MCP protocol
-2. **swift-mcp Processing**: The server searches enabled sources based on your query
+1. **Query**: Receives a query through the MCP protocol
+2. **Processing**: Searches enabled sources based on the query
 3. **Content Retrieval**: Fetches and parses content from RSS feeds, APIs, and cached data
 4. **Quality Filtering**: Applies configurable quality thresholds
-5. **Response**: Returns formatted, relevant patterns and examples to your AI assistant
+5. **Response**: Returns formatted, relevant patterns and examples
 
 ## 🔧 Troubleshooting
 
