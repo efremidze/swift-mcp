@@ -2,10 +2,6 @@
 
 ### 🎯 Curated Swift/SwiftUI Patterns from Top iOS Developers
 
-[![NPM Version](https://img.shields.io/npm/v/@efremidze/swift-mcp)](https://www.npmjs.com/package/@efremidze/swift-mcp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node Version](https://img.shields.io/node/v/@efremidze/swift-mcp)](https://nodejs.org)
-
 **An MCP server providing curated Swift and SwiftUI best practices from leading iOS developers, including patterns and real-world code examples from Swift by Sundell, SwiftLee, and other trusted sources.**
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Usage](#-usage-examples) • [Contributing](#-contributing)
