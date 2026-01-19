@@ -1,7 +1,7 @@
 // src/integration/mcp-server.test.ts
 // Integration tests for MCP server - protocol and response quality
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawn, ChildProcess } from 'child_process';
 import * as readline from 'readline';
 import * as path from 'path';
@@ -30,34 +30,24 @@ class MCPTestClient {
   }>();
   private rl: readline.Interface | null = null;
   private stopped = false;
-  private stderrOutput: string[] = [];
 
   async start(): Promise<void> {
     const serverPath = path.join(process.cwd(), 'build', 'index.js');
     this.stopped = false;
-    this.stderrOutput = [];
 
     this.process = spawn('node', [serverPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: process.cwd(),
     });
 
-    // Capture stderr for debugging
-    this.process.stderr?.on('data', (data) => {
-      this.stderrOutput.push(data.toString());
-    });
-
     // Handle process errors
     this.process.on('error', (err) => {
-      this.rejectAllPending(new Error(`Process error: ${err.message}`));
+      this.rejectAllPending(err);
     });
 
-    this.process.on('exit', (code, signal) => {
-      if (!this.stopped && (code !== 0 || signal)) {
-        const stderr = this.stderrOutput.join('');
-        this.rejectAllPending(new Error(
-          `Server exited unexpectedly (code=${code}, signal=${signal}). Stderr: ${stderr.slice(-500)}`
-        ));
+    this.process.on('exit', (code) => {
+      if (code !== 0 && code !== null) {
+        this.rejectAllPending(new Error(`Server exited with code ${code}`));
       }
     });
 
@@ -80,7 +70,6 @@ class MCPTestClient {
       }
     });
 
-    // Wait for server to be ready
     await new Promise(resolve => setTimeout(resolve, 500));
   }
 
@@ -106,15 +95,8 @@ class MCPTestClient {
     }
   }
 
-  isAvailable(): boolean {
-    return !this.stopped &&
-           this.process !== null &&
-           this.process.stdin !== null &&
-           !this.process.stdin.destroyed;
-  }
-
   async send(method: string, params?: Record<string, unknown>): Promise<JsonRpcResponse> {
-    if (!this.isAvailable()) {
+    if (this.stopped || !this.process || !this.process.stdin || this.process.stdin.destroyed) {
       throw new Error('Client not available');
     }
 
@@ -179,13 +161,6 @@ describe('MCP Server Integration', () => {
 
   afterAll(async () => {
     await client.stop();
-  });
-
-  beforeEach(() => {
-    // Skip test if client is not available (server crashed)
-    if (!client.isAvailable()) {
-      throw new Error('Server not available - previous test may have crashed it');
-    }
   });
 
   // ============================================================
@@ -275,13 +250,13 @@ describe('MCP Server Integration', () => {
   });
 
   describe('search_swift_content', () => {
-    it('should return search results', async () => {
+    it('should return search results with excerpts', async () => {
       const text = await client.callToolText('search_swift_content', {
         query: 'async await',
       });
 
       expect(text).toMatch(/# Search Results/);
-      expect(text.length).toBeGreaterThan(50);
+      expect(text.length).toBeGreaterThan(100);
     }, 60000);
   });
 
@@ -299,25 +274,41 @@ describe('MCP Server Integration', () => {
   });
 
   // ============================================================
-  // Response Quality Tests (reduced to avoid server overload)
+  // Response Quality Tests
   // ============================================================
 
   describe('Response Quality', () => {
-    it('should use markdown formatting', async () => {
-      const text = await client.callToolText('list_content_sources');
+    it('should use markdown formatting consistently', async () => {
+      const responses = await Promise.all([
+        client.callToolText('list_content_sources'),
+        client.callToolText('get_swift_pattern', { topic: 'testing', minQuality: 50 }),
+      ]);
 
-      expect(text).toMatch(/^#+ /m);
-      expect(text).not.toMatch(/<div|<span|<p>/);
-    });
+      for (const text of responses) {
+        expect(text).toMatch(/^#+ /m);
+        expect(text).not.toMatch(/<div|<span|<p>/);
+      }
+    }, 60000);
 
     it('should have reasonable response length', async () => {
       const text = await client.callToolText('get_swift_pattern', {
-        topic: 'testing',
-        minQuality: 50,
+        topic: 'swiftui',
+        minQuality: 70,
       });
 
       expect(text.length).toBeGreaterThan(50);
       expect(text.length).toBeLessThan(50000);
+    }, 60000);
+
+    it('should separate multiple results clearly', async () => {
+      const text = await client.callToolText('get_swift_pattern', {
+        topic: 'concurrency',
+        minQuality: 60,
+      });
+
+      if (!text.includes('No patterns found')) {
+        expect(text).toMatch(/---/);
+      }
     }, 60000);
   });
 });
