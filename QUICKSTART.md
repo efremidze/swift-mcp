@@ -29,7 +29,11 @@ You'll get curated patterns from:
 
 #### Cursor
 
-Create `.cursor/mcp.json`:
+cursor://anysphere.cursor-deeplink/mcp/install?name=swift&config=eyJjb21tYW5kIjoibnB4IC15IEBlZnJlbWlkemUvc3dpZnQtbWNwQGxhdGVzdCJ9
+
+Or manually add to **Cursor Settings** → **Tools** → **MCP Servers**:
+
+`.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {

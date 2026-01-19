@@ -121,8 +121,11 @@ npm install -g @efremidze/swift-mcp
 
 #### Cursor
 
-Create or edit `.cursor/mcp.json`:
+cursor://anysphere.cursor-deeplink/mcp/install?name=swift&config=eyJjb21tYW5kIjoibnB4IC15IEBlZnJlbWlkemUvc3dpZnQtbWNwQGxhdGVzdCJ9
 
+Or manually add to **Cursor Settings** → **Tools** → **MCP Servers**:
+
+`.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
