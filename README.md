@@ -358,7 +358,7 @@ swift-mcp setup
 ### Future (v2.x)
 - [ ] Additional premium sources
 - [ ] More free sources
-- [ ] Advanced search
+- [ ] Advanced search (with vector embeddings)
 - [ ] Code validation
 
 ## 🤝 Contributing
