@@ -45,14 +45,14 @@
 ### Install
 
 ```bash
-npm install -g @efremidze/swift-mcp
+npm install -g swift-patterns-mcp
 ```
 
 ### Configure Your AI Assistant
 
 #### Cursor
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=swift-patterns&config=eyJjb21tYW5kIjoibnB4IC15IEBlZnJlbWlkemUvc3dpZnQtbWNwQGxhdGVzdCJ9)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=swift-patterns&config=eyJjb21tYW5kIjoibnB4IC15IHN3aWZ0LXBhdHRlcm5zLW1jcEBsYXRlc3QifQ%3D%3D)
 
 Or manually add to **Cursor Settings** → **Tools** → **MCP Servers**:
 
@@ -62,7 +62,7 @@ Or manually add to **Cursor Settings** → **Tools** → **MCP Servers**:
   "mcpServers": {
     "swift-patterns": {
       "command": "npx",
-      "args": ["-y", "@efremidze/swift-mcp@latest"]
+      "args": ["-y", "swift-patterns-mcp@latest"]
     }
   }
 }
@@ -75,7 +75,7 @@ Alternatively, add the following to your `~/.cursor/mcp.json` file. To learn mor
 Run this command in your terminal:
 
 ```bash
-claude mcp add swift-patterns -- npx -y @efremidze/swift-mcp@latest
+claude mcp add swift-patterns -- npx -y swift-patterns-mcp@latest
 ```
 
 Or manually add to your project's `.mcp.json` file:
@@ -86,7 +86,7 @@ Or manually add to your project's `.mcp.json` file:
   "mcpServers": {
     "swift-patterns": {
       "command": "npx",
-      "args": ["-y", "@efremidze/swift-mcp@latest"]
+      "args": ["-y", "swift-patterns-mcp@latest"]
     }
   }
 }
@@ -106,7 +106,7 @@ Add the swift-patterns server to your project's `.windsurf/mcp.json` configurati
   "mcpServers": {
     "swift-patterns": {
       "command": "npx",
-      "args": ["-y", "@efremidze/swift-mcp@latest"]
+      "args": ["-y", "swift-patterns-mcp@latest"]
     }
   }
 }
@@ -127,7 +127,7 @@ To configure MCP in VS Code with GitHub Copilot, add the swift-mcp server to you
     "servers": {
       "swift-patterns": {
         "command": "npx",
-        "args": ["-y", "@efremidze/swift-mcp@latest"]
+        "args": ["-y", "swift-patterns-mcp@latest"]
       }
     }
   }
@@ -175,7 +175,7 @@ For premium features, add to your MCP client config:
   "mcpServers": {
     "swift-patterns": {
       "command": "npx",
-      "args": ["-y", "@efremidze/swift-mcp@latest"],
+      "args": ["-y", "swift-patterns-mcp@latest"],
       "env": {
         "PATREON_CLIENT_ID": "your_client_id",
         "PATREON_CLIENT_SECRET": "your_client_secret"

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- npm account with publish access to `@efremidze/swift-mcp`
+- npm account with publish access to `swift-patterns-mcp`
 - Repository write access
 - Clean working directory (no uncommitted changes)
 
