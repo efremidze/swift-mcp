@@ -62,7 +62,7 @@ npm install -g @efremidze/swift-mcp
 
 #### Cursor
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=swift&config=eyJjb21tYW5kIjoibnB4IC15IEBlZnJlbWlkemUvc3dpZnQtbWNwQGxhdGVzdCJ9)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=swift-patterns&config=eyJjb21tYW5kIjoibnB4IC15IEBlZnJlbWlkemUvc3dpZnQtbWNwQGxhdGVzdCJ9)
 
 Or manually add to **Cursor Settings** → **Tools** → **MCP Servers**:
 
@@ -70,7 +70,7 @@ Or manually add to **Cursor Settings** → **Tools** → **MCP Servers**:
 ```json
 {
   "mcpServers": {
-    "swift": {
+    "swift-patterns": {
       "command": "npx",
       "args": ["-y", "@efremidze/swift-mcp@latest"]
     }
@@ -85,7 +85,7 @@ Alternatively, add the following to your `~/.cursor/mcp.json` file. To learn mor
 Run this command in your terminal:
 
 ```bash
-claude mcp add swift -- npx -y @efremidze/swift-mcp@latest
+claude mcp add swift-patterns -- npx -y @efremidze/swift-mcp@latest
 ```
 
 Or manually add to your project's `.mcp.json` file:
@@ -94,7 +94,7 @@ Or manually add to your project's `.mcp.json` file:
 ```json
 {
   "mcpServers": {
-    "swift": {
+    "swift-patterns": {
       "command": "npx",
       "args": ["-y", "@efremidze/swift-mcp@latest"]
     }
@@ -102,19 +102,19 @@ Or manually add to your project's `.mcp.json` file:
 }
 ```
 
-After adding the configuration, restart Claude Code and run /mcp to see the HeroUI MCP server in the list. If you see Connected, you're ready to use it.
+After adding the configuration, restart Claude Code and run /mcp to see the swift-patterns MCP server in the list. If you see Connected, you're ready to use it.
 
 See the Claude Code MCP documentation for more details.
 
 #### Windsurf
 
-Add the HeroUI server to your project's `.windsurf/mcp.json` configuration file:
+Add the swift-patterns server to your project's `.windsurf/mcp.json` configuration file:
 
 `.windsurf/mcp.json`
 ```json
 {
   "mcpServers": {
-    "swift": {
+    "swift-patterns": {
       "command": "npx",
       "args": ["-y", "@efremidze/swift-mcp@latest"]
     }
@@ -135,7 +135,7 @@ To configure MCP in VS Code with GitHub Copilot, add the swift-mcp server to you
 {
   "mcp": {
     "servers": {
-      "swift": {
+      "swift-patterns": {
         "command": "npx",
         "args": ["-y", "@efremidze/swift-mcp@latest"]
       }
@@ -144,7 +144,7 @@ To configure MCP in VS Code with GitHub Copilot, add the swift-mcp server to you
 }
 ```
 
-After adding the configuration, open `.vscode/mcp.json` and click Start next to the heroui-react server.
+After adding the configuration, open `.vscode/mcp.json` and click Start next to the swift-patterns server.
 
 See the VS Code MCP documentation for more details.
 
@@ -183,7 +183,7 @@ For premium features, add to your MCP client config:
 ```json
 {
   "mcpServers": {
-    "swift": {
+    "swift-patterns": {
       "command": "npx",
       "args": ["-y", "@efremidze/swift-mcp@latest"],
       "env": {
