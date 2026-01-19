@@ -340,24 +340,9 @@ graph LR
 
 ### Common Issues
 
-#### Installation Problems
-
-**Error: Node version incompatible**
+**Node version incompatible**
 ```bash
-# Check your Node version
-node --version
-
-# Should be >= 18.0.0
-# Update Node if needed: https://nodejs.org
-```
-
-**Error: Permission denied during global install**
-```bash
-# Use npx without global install
-npx @efremidze/swift-mcp@latest
-
-# Or fix npm permissions:
-# https://docs.npmjs.com/resolving-eacces-permissions-errors
+node --version  # Should be >= 18.0.0
 ```
 
 #### Configuration Issues
