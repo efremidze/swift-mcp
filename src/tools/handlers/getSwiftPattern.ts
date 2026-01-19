@@ -7,6 +7,23 @@ import VanderLeeSource from '../../sources/free/vanderlee.js';
 
 export const getSwiftPatternHandler: ToolHandler = async (args, context) => {
   const topic = args?.topic as string;
+
+  if (!topic) {
+    return {
+      content: [{
+        type: "text",
+        text: `Missing required argument: topic
+
+Usage: get_swift_pattern({ topic: "swiftui" })
+
+Example topics:
+- swiftui, concurrency, testing, networking
+- performance, architecture, protocols
+- async-await, combine, coredata`,
+      }],
+    };
+  }
+
   const source = (args?.source as string) || "all";
   const minQuality = (args?.minQuality as number) || 60;
 

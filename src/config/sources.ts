@@ -1,5 +1,7 @@
 // src/config/sources.ts
 
+import * as fs from 'fs';
+import * as path from 'path';
 import { getConfigPath } from '../utils/paths.js';
 
 export type SourceType = 'free' | 'premium';
@@ -101,7 +103,6 @@ export class SourceManager {
   
   private loadConfig(): SourceConfig {
     try {
-      const fs = require('fs');
       const data = fs.readFileSync(this.configPath, 'utf-8');
       return JSON.parse(data);
     } catch {
@@ -119,8 +120,6 @@ export class SourceManager {
   }
   
   private saveConfig(): void {
-    const fs = require('fs');
-    const path = require('path');
     const dir = path.dirname(this.configPath);
     
     if (!fs.existsSync(dir)) {
