@@ -8,13 +8,7 @@
 
 ---
 
-## 🎯 About
-
-**swift-mcp** is a Model Context Protocol (MCP) server that provides curated Swift and SwiftUI expertise from top iOS developers like John Sundell and Antoine van der Lee.
-
-Whether you're building a new iOS app or looking for solutions to common Swift problems, swift-mcp delivers expert-level patterns and best practices from the Swift community's most trusted educators.
-
-### Why swift-mcp?
+## Why swift-mcp?
 
 - ✅ **Curated Content**: Only high-quality patterns from trusted iOS developers
 - ✅ **Always Up-to-Date**: Automatically fetches the latest articles and patterns
