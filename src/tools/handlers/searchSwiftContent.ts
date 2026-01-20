@@ -1,29 +1,22 @@
 // src/tools/handlers/searchSwiftContent.ts
 
 import type { ToolHandler } from '../types.js';
-import type { BasePattern } from '../../sources/free/rssPatternSource.js';
-import SundellSource from '../../sources/free/sundell.js';
-import VanderLeeSource from '../../sources/free/vanderlee.js';
-import NilCoalescingSource from '../../sources/free/nilcoalescing.js';
+import { searchMultipleSources } from '../../utils/source-registry.js';
+import { formatSearchPatterns } from '../../utils/pattern-formatter.js';
+import { createTextResponse } from '../../utils/response-helpers.js';
 
 export const searchSwiftContentHandler: ToolHandler = async (args) => {
   const query = args?.query as string;
   const requireCode = args?.requireCode as boolean;
 
-  const results: BasePattern[] = [];
+  if (!query) {
+    return createTextResponse(`Missing required argument: query
 
-  // Search all enabled free sources
-  const sundell = new SundellSource();
-  const sundellResults = await sundell.searchPatterns(query);
-  results.push(...sundellResults);
+Usage: search_swift_content({ query: "async await" })`);
+  }
 
-  const vanderlee = new VanderLeeSource();
-  const vanderLeeResults = await vanderlee.searchPatterns(query);
-  results.push(...vanderLeeResults);
-
-  const nilCoalescing = new NilCoalescingSource();
-  const nilCoalescingResults = await nilCoalescing.searchPatterns(query);
-  results.push(...nilCoalescingResults);
+  // Search all free sources in parallel
+  const results = await searchMultipleSources(query);
 
   // Filter by code if requested
   const filtered = requireCode
@@ -31,29 +24,15 @@ export const searchSwiftContentHandler: ToolHandler = async (args) => {
     : results;
 
   if (filtered.length === 0) {
-    return {
-      content: [{
-        type: "text",
-        text: `No results found for "${query}"${requireCode ? ' with code examples' : ''}.`,
-      }],
-    };
+    return createTextResponse(`No results found for "${query}"${requireCode ? ' with code examples' : ''}.`);
   }
 
-  const formatted = filtered.slice(0, 10).map(r => `
-## ${r.title}
-**Source**: ${r.id.split('-')[0]}
-${r.hasCode ? '**Code**: ✅' : ''}
-${r.excerpt.substring(0, 200)}...
-[Read more](${r.url})
-`).join('\n---\n');
+  // Format using shared utility
+  const formatted = formatSearchPatterns(filtered, query, {
+    maxResults: 10,
+    includeCode: true,
+    excerptLength: 200,
+  });
 
-  return {
-    content: [{
-      type: "text",
-      text: `# Search Results: "${query}"
-
-${formatted}
-`,
-    }],
-  };
+  return createTextResponse(formatted);
 };

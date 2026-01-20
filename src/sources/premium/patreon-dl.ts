@@ -74,8 +74,6 @@ export async function downloadCreatorContent(
   const outDir = path.join(getPatreonContentDir(), creatorName);
 
   try {
-    console.log(`Downloading content for ${creatorName}...`);
-
     // Run patreon-dl with session_id cookie format
     const cmd = `npx patreon-dl -c "session_id=${cookie}" -o "${outDir}" "${creatorUrl}"`;
     await execAsync(cmd, { timeout: 300000 }); // 5 min timeout

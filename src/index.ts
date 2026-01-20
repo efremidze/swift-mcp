@@ -13,11 +13,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 import SourceManager from "./config/sources.js";
-import { getHandler, ToolContext } from './tools/index.js';
+import { getHandler, ToolContext, PatreonSourceConstructor } from './tools/index.js';
+import { createErrorResponseFromError } from './utils/response-helpers.js';
 
 // Premium sources (imported conditionally)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let patreonSource: any = null;
+let patreonSource: PatreonSourceConstructor | null = null;
 try {
   const module = await import("./sources/premium/patreon.js");
   patreonSource = module.PatreonSource;
@@ -45,7 +45,7 @@ const CORE_TOOLS: Tool[] = [
         },
         source: {
           type: "string",
-          enum: ["all", "sundell", "vanderlee", "nilcoalescing"],
+          enum: ["all", "sundell", "vanderlee", "nilcoalescing", "pointfree"],
           description: "Specific source to search (default: all free sources)",
         },
         minQuality: {
@@ -168,152 +168,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
-    // Check registry first for core handlers
     const handler = getHandler(name);
     if (handler) {
       return handler(args ?? {}, toolContext);
     }
-
-    // Patreon handlers remain inline (complex, references dynamic import)
-    switch (name) {
-      case "setup_patreon": {
-        if (!patreonSource) {
-          return {
-            content: [{
-              type: "text",
-              text: `❌ Patreon integration not available.
-
-Please ensure:
-1. PATREON_CLIENT_ID is set in environment
-2. PATREON_CLIENT_SECRET is set in environment
-
-Get credentials at: https://www.patreon.com/portal/registration/register-clients`,
-            }],
-          };
-        }
-
-        const action = (args?.action as string) || "start";
-
-        if (action === "status") {
-          const isConfigured = sourceManager.isSourceConfigured('patreon');
-          return {
-            content: [{
-              type: "text",
-              text: isConfigured
-                ? `✅ Patreon is configured and ready to use!`
-                : `⚙️ Patreon is not yet configured.
-
-Run: swift-patterns-mcp setup --patreon`,
-            }],
-          };
-        }
-
-        return {
-          content: [{
-            type: "text",
-            text: `⚙️ Patreon Setup
-
-To set up Patreon integration, run:
-\`\`\`bash
-swift-patterns-mcp setup --patreon
-\`\`\`
-
-This will:
-1. Open your browser for Patreon OAuth
-2. Connect your subscriptions
-3. Analyze your content
-4. Enable premium patterns
-
-After setup, you'll have access to:
-- High-quality patterns from creators you support
-- Automatic code extraction from zips
-- Advanced filtering and search`,
-          }],
-        };
-      }
-
-      case "get_patreon_patterns": {
-        if (!sourceManager.isSourceConfigured('patreon')) {
-          return {
-            content: [{
-              type: "text",
-              text: `⚙️ Patreon not configured.
-
-Set it up with: swift-patterns-mcp setup --patreon`,
-            }],
-          };
-        }
-
-        if (!patreonSource) {
-          return {
-            content: [{
-              type: "text",
-              text: `❌ Patreon module not available. Check your installation.`,
-            }],
-          };
-        }
-
-        const topic = args?.topic as string;
-        const requireCode = args?.requireCode as boolean;
-
-        const patreon = new patreonSource();
-        let patterns = topic
-          ? await patreon.searchPatterns(topic)
-          : await patreon.fetchPatterns();
-
-        if (requireCode) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          patterns = patterns.filter((p: any) => p.hasCode);
-        }
-
-        if (patterns.length === 0) {
-          return {
-            content: [{
-              type: "text",
-              text: `No Patreon patterns found${topic ? ` for "${topic}"` : ''}${requireCode ? ' with code' : ''}.`,
-            }],
-          };
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const formatted = patterns.slice(0, 10).map((p: any) => `
-## ${p.title}
-**Creator**: ${p.creator}
-**Date**: ${new Date(p.publishDate).toLocaleDateString()}
-${p.hasCode ? '**Has Code**: ✅' : ''}
-**Topics**: ${p.topics.length > 0 ? p.topics.join(', ') : 'General'}
-
-${p.excerpt}...
-
-**[Read full post](${p.url})**
-`).join('\n---\n');
-
-        return {
-          content: [{
-            type: "text",
-            text: `# Patreon Patterns${topic ? `: ${topic}` : ''}
-
-Found ${patterns.length} posts from your subscriptions:
-
-${formatted}
-
-${patterns.length > 10 ? `\n*Showing top 10 of ${patterns.length} results*` : ''}`,
-          }],
-        };
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
-    }
+    throw new Error(`Unknown tool: ${name}`);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [{
-        type: "text",
-        text: `Error: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponseFromError(error);
   }
 });
 

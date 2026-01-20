@@ -6,7 +6,8 @@ import { scanDownloadedContent, DownloadedPost } from './patreon-dl.js';
 import { getByPatreonId } from '../../config/creators.js';
 import { getPatreonCreatorsPath } from '../../utils/paths.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
-import { BASE_TOPIC_KEYWORDS, BASE_QUALITY_SIGNALS, mergeKeywords, mergeQualitySignals } from '../../config/swift-keywords.js';
+import { createSourceConfig } from '../../config/swift-keywords.js';
+import { logError } from '../../utils/errors.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -61,21 +62,10 @@ interface PatreonIdentityResponse {
   included?: Array<PatreonMember | PatreonCampaign>;
 }
 
-// Patreon-specific keywords (extends base)
-const patreonSpecificTopics: Record<string, string[]> = {
-  'swiftui': ['@observable'], // Adds to base
-  'architecture': ['clean architecture'], // Adds to base
-};
-
-const patreonSpecificSignals: Record<string, number> = {
-  'swift': 10,
-  'ios': 8,
-  'pattern': 6,
-  'best practice': 8,
-};
-
-const patreonTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, patreonSpecificTopics);
-const patreonQualitySignals = mergeQualitySignals(BASE_QUALITY_SIGNALS, patreonSpecificSignals);
+const { topicKeywords: patreonTopicKeywords, qualitySignals: patreonQualitySignals } = createSourceConfig(
+  { 'swiftui': ['@observable'], 'architecture': ['clean architecture'] },
+  { 'swift': 10, 'ios': 8, 'pattern': 6, 'best practice': 8 }
+);
 
 // Patreon-specific scoring constants
 const PATREON_CODE_BONUS = 15; // Higher bonus for code-heavy Patreon content
@@ -138,30 +128,22 @@ export class PatreonSource {
     if (!accessToken) return [];
 
     try {
-      // Use identity endpoint with memberships to get campaigns user is subscribed to
-      // This is the ONLY correct way to get patron memberships
       const url = `${PATREON_API}/identity?include=memberships.campaign&fields[user]=full_name,email&fields[member]=patron_status&fields[campaign]=creation_name,url,summary`;
-      console.log(`Fetching: ${url}`);
 
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
 
       if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`Failed to fetch memberships: ${response.status}`);
-        console.error(`Response: ${errorBody}`);
+        logError('Patreon', `Failed to fetch memberships: ${response.status}`);
         return [];
       }
 
       const data = await response.json() as PatreonIdentityResponse;
 
       if (!data.included) {
-        console.error('No memberships data in response. User may not have any active patron memberships.');
         return [];
       }
-
-      console.log(`Memberships response: ${JSON.stringify(data, null, 2).slice(0, 500)}`);
 
       // Extract active memberships and their campaigns
       const members = data.included.filter(
@@ -182,7 +164,7 @@ export class PatreonSource {
       );
 
       // Return campaigns user is actively subscribed to
-      const creators = campaigns
+      return campaigns
         .filter(c => activeCampaignIds.has(c.id))
         .map(campaign => ({
           id: campaign.id,
@@ -193,17 +175,8 @@ export class PatreonSource {
             campaign.attributes.summary
           ),
         }));
-
-      if (creators.length === 0) {
-        console.warn(
-          'No active Patreon memberships found. ' +
-          'You must be a paying patron of at least one creator to use Patreon with swift-patterns-mcp.'
-        );
-      }
-
-      return creators;
     } catch (error) {
-      console.error('Failed to fetch subscribed creators:', error);
+      logError('Patreon', error);
       return [];
     }
   }
@@ -219,11 +192,8 @@ export class PatreonSource {
       ? [creatorId]
       : this.enabledCreators;
 
-    console.log(`Fetching patterns for ${creatorsToFetch.length} creators:`, creatorsToFetch);
-
     // 1. Scan locally downloaded content (from patreon-dl)
     const downloadedPosts = scanDownloadedContent();
-    console.log(`Found ${downloadedPosts.length} downloaded posts`);
 
     for (const post of downloadedPosts) {
       // Filter by creator if specified
@@ -242,15 +212,10 @@ export class PatreonSource {
     // 2. Fetch YouTube videos for additional metadata
     for (const patreonId of creatorsToFetch) {
       const creator = getByPatreonId(patreonId);
-      if (!creator?.youtubeChannelId) {
-        console.log(`No YouTube channel for creator ${patreonId}`);
-        continue;
-      }
+      if (!creator?.youtubeChannelId) continue;
 
       try {
         const videos = await getChannelVideos(creator.youtubeChannelId, 50);
-        console.log(`Found ${videos.length} videos for ${creator.name}`);
-
         for (const video of videos) {
           // Add video as pattern (skip if we already have downloaded content for this)
           const hasDownloaded = patterns.some(p =>
@@ -261,7 +226,7 @@ export class PatreonSource {
           }
         }
       } catch (error) {
-        console.error(`Failed to fetch videos for ${creator.name}:`, error);
+        logError('Patreon', error, { creator: creator.name });
       }
     }
 
@@ -340,7 +305,7 @@ export class PatreonSource {
           patterns.push(this.videoToPattern(video, creator.name));
         }
       } catch (error) {
-        console.error(`Search failed for ${creator.name}:`, error);
+        logError('Patreon', error, { creator: creator.name, query });
       }
     }
 
