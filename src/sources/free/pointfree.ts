@@ -1,6 +1,7 @@
 // src/sources/free/pointfree.ts
 
 import path from 'path';
+import { createHash } from 'crypto';
 import { rssCache, articleCache } from '../../utils/cache.js';
 import { SearchIndex, combineScores } from '../../utils/search.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
@@ -175,17 +176,18 @@ function extractTitle(filePath: string, content: string): string {
 }
 
 function stripFormatting(content: string): string {
+  // Single-pass regex for better performance
   return content
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/`[^`]+`/g, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\[[^\]]+]\([^)]+\)/g, ' ')
+    .replace(/```[\s\S]*?```|<[^>]+>|\[[^\]]+]\([^)]+\)|`[^`]+`/g, ' ')
     .replace(/[#>*_\-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 export class PointFreeSource {
+  private searchIndex: SearchIndex<PointFreePattern> | null = null;
+  private indexedPatternsHash: string | null = null;
+
   private async getDefaultBranch(): Promise<string> {
     try {
       const repoInfo = await fetchJson<GitHubRepoResponse>(
@@ -234,7 +236,9 @@ export class PointFreeSource {
 
   async fetchPatterns(): Promise<PointFreePattern[]> {
     const cached = await rssCache.get<PointFreePattern[]>(POINTFREE_CACHE_KEY);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     const branch = await this.getDefaultBranch();
     const { branch: resolvedBranch, files } = await this.fetchContentFiles(branch);
@@ -264,14 +268,28 @@ export class PointFreeSource {
     });
 
     await rssCache.set(POINTFREE_CACHE_KEY, patterns, POINTFREE_CACHE_TTL);
+    // Invalidate search index after fetching new patterns
+    this.searchIndex = null;
+    this.indexedPatternsHash = null;
     return patterns;
   }
 
   async searchPatterns(query: string): Promise<PointFreePattern[]> {
     const patterns = await this.fetchPatterns();
-    const searchIndex = new SearchIndex<PointFreePattern>(['title', 'content', 'topics']);
-    searchIndex.addDocuments(patterns);
-    const results = searchIndex.search(query, {
+    
+    // Create a hash to check if patterns changed (more efficient than string concatenation)
+    const patternsHash = createHash('md5')
+      .update(`${patterns.length}-${patterns.map(p => p.id).sort().join(',')}`)
+      .digest('hex');
+    
+    // Reuse search index if patterns haven't changed, otherwise create new one
+    if (!this.searchIndex || this.indexedPatternsHash !== patternsHash) {
+      this.searchIndex = new SearchIndex<PointFreePattern>(['title', 'content', 'topics']);
+      this.searchIndex.addDocuments(patterns);
+      this.indexedPatternsHash = patternsHash;
+    }
+    
+    const results = this.searchIndex.search(query, {
       fuzzy: 0.2,
       boost: { title: 2.5, topics: 1.8, content: 1 },
     });
