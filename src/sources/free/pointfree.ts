@@ -26,7 +26,7 @@ interface GitHubTreeResponse {
 
 const POINTFREE_OWNER = 'pointfreeco';
 const POINTFREE_REPO = 'pointfreeco';
-const POINTFREE_CACHE_KEY = 'pointfree-oss-patterns';
+const POINTFREE_CACHE_KEY = 'pointfree-patterns';
 const POINTFREE_CACHE_TTL = 3600;
 const MAX_FILES = 160;
 

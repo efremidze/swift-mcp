@@ -66,7 +66,7 @@ vi.mock('../../sources/free/pointfree.js', () => ({
   default: vi.fn().mockImplementation(() => ({
     searchPatterns: vi.fn().mockResolvedValue([
       {
-        id: 'pointfree-oss-1',
+        id: 'pointfree-1',
         title: 'Composable Architecture Case Study',
         url: 'https://example.com/pointfree',
         excerpt: 'A case study on composable architecture',
@@ -86,7 +86,7 @@ function createMockSourceManager() {
     { id: 'sundell', name: 'Swift by Sundell', type: 'free', requiresAuth: false, isEnabled: true, isConfigured: true, description: 'Swift articles' },
     { id: 'vanderlee', name: 'Antoine van der Lee', type: 'free', requiresAuth: false, isEnabled: true, isConfigured: true, description: 'iOS tips' },
     { id: 'nilcoalescing', name: 'Nil Coalescing', type: 'free', requiresAuth: false, isEnabled: true, isConfigured: true, description: 'SwiftUI tips' },
-    { id: 'pointfree-oss', name: 'Point-Free (Open Source)', type: 'free', requiresAuth: false, isEnabled: true, isConfigured: true, description: 'Open source patterns' },
+    { id: 'pointfree', name: 'Point-Free', type: 'free', requiresAuth: false, isEnabled: true, isConfigured: true, description: 'Open source patterns' },
     { id: 'patreon', name: 'Patreon', type: 'premium', requiresAuth: true, isEnabled: false, isConfigured: false, description: 'Premium content' },
   ];
 
@@ -269,6 +269,6 @@ describe('enableSourceHandler', () => {
     expect(result.content[0].text).toContain('sundell');
     expect(result.content[0].text).toContain('vanderlee');
     expect(result.content[0].text).toContain('nilcoalescing');
-    expect(result.content[0].text).toContain('pointfree-oss');
+    expect(result.content[0].text).toContain('pointfree');
   });
 });

@@ -50,7 +50,7 @@ Example topics:
     results.push(...patterns.filter(p => p.relevanceScore >= minQuality));
   }
 
-  if (source === "all" || source === "pointfree-oss") {
+  if (source === "all" || source === "pointfree") {
     const pointFree = new PointFreeSource();
     const patterns = await pointFree.searchPatterns(topic);
     results.push(...patterns.filter(p => p.relevanceScore >= minQuality));

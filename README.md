@@ -158,7 +158,7 @@ The configuration file is automatically created at `~/.swift-patterns-mcp/config
   "sources": {
     "sundell": { "enabled": true, "quality": 60 },
     "vanderlee": { "enabled": true, "quality": 60 },
-    "pointfree-oss": { "enabled": false, "quality": 60 },
+    "pointfree": { "enabled": false, "quality": 60 },
     "patreon": { "enabled": false }
   },
   "cache": {
