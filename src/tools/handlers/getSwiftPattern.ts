@@ -1,11 +1,8 @@
 // src/tools/handlers/getSwiftPattern.ts
 
 import type { ToolHandler } from '../types.js';
-import type { BasePattern } from '../../sources/free/rssPatternSource.js';
-import SundellSource from '../../sources/free/sundell.js';
-import VanderLeeSource from '../../sources/free/vanderlee.js';
-import NilCoalescingSource from '../../sources/free/nilcoalescing.js';
-import PointFreeSource from '../../sources/free/pointfree.js';
+import { getSources, type FreeSourceName } from '../../utils/source-registry.js';
+import { formatTopicPatterns } from '../../utils/pattern-formatter.js';
 
 export const getSwiftPatternHandler: ToolHandler = async (args, context) => {
   const topic = args?.topic as string;
@@ -29,32 +26,18 @@ Example topics:
   const source = (args?.source as string) || "all";
   const minQuality = (args?.minQuality as number) || 60;
 
-  const results: BasePattern[] = [];
-
-  // Get from free sources
-  if (source === "all" || source === "sundell") {
-    const sundell = new SundellSource();
-    const patterns = await sundell.searchPatterns(topic);
-    results.push(...patterns.filter(p => p.relevanceScore >= minQuality));
-  }
-
-  if (source === "all" || source === "vanderlee") {
-    const vanderlee = new VanderLeeSource();
-    const patterns = await vanderlee.searchPatterns(topic);
-    results.push(...patterns.filter(p => p.relevanceScore >= minQuality));
-  }
-
-  if (source === "all" || source === "nilcoalescing") {
-    const nilCoalescing = new NilCoalescingSource();
-    const patterns = await nilCoalescing.searchPatterns(topic);
-    results.push(...patterns.filter(p => p.relevanceScore >= minQuality));
-  }
-
-  if (source === "all" || source === "pointfree") {
-    const pointFree = new PointFreeSource();
-    const patterns = await pointFree.searchPatterns(topic);
-    results.push(...patterns.filter(p => p.relevanceScore >= minQuality));
-  }
+  // Get sources based on request
+  const sources = getSources(source as FreeSourceName | 'all');
+  
+  // Search all requested sources in parallel
+  const allResults = await Promise.all(
+    sources.map(s => s.searchPatterns(topic))
+  );
+  
+  // Filter by quality and flatten
+  const results = allResults
+    .flat()
+    .filter(p => p.relevanceScore >= minQuality);
 
   if (results.length === 0) {
     return {
@@ -76,29 +59,19 @@ ${context.sourceManager.isSourceConfigured('patreon') ? '\n💡 Enable Patreon f
   // Sort by relevance
   results.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
-  const formatted = results.slice(0, 10).map(p => `
-## ${p.title}
-**Source**: ${p.id.split('-')[0]}
-**Quality**: ${p.relevanceScore}/100
-**Topics**: ${p.topics.join(', ')}
-${p.hasCode ? '**Has Code**: ✅' : ''}
-
-${p.excerpt}...
-
-**[Read full article](${p.url})**
-`).join('\n---\n');
+  // Format using shared utility
+  const formatted = formatTopicPatterns(results, topic, {
+    maxResults: 10,
+    includeQuality: true,
+    includeTopics: true,
+    includeCode: true,
+    excerptLength: 300,
+  });
 
   return {
     content: [{
       type: "text",
-      text: `# Swift Patterns: ${topic}
-
-Found ${results.length} patterns from free sources:
-
-${formatted}
-
-${results.length > 10 ? `\n*Showing top 10 of ${results.length} results*` : ''}
-`,
+      text: formatted,
     }],
   };
 };

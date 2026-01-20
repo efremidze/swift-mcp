@@ -6,6 +6,8 @@ import { rssCache, articleCache } from '../../utils/cache.js';
 import { SearchIndex, combineScores } from '../../utils/search.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
 import { BASE_TOPIC_KEYWORDS, BASE_QUALITY_SIGNALS, mergeKeywords, mergeQualitySignals } from '../../config/swift-keywords.js';
+import { fetchJson, fetchText, buildHeaders } from '../../utils/http.js';
+import { runWithConcurrency } from '../../utils/concurrency.js';
 import type { BasePattern } from './rssPatternSource.js';
 
 export interface PointFreePattern extends BasePattern {
@@ -74,72 +76,10 @@ const pointfreeSpecificSignals: Record<string, number> = {
 const pointfreeTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, pointfreeSpecificTopics);
 const pointfreeQualitySignals = mergeQualitySignals(BASE_QUALITY_SIGNALS, pointfreeSpecificSignals);
 
-function buildHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    'User-Agent': 'swift-patterns-mcp/1.0 (GitHub Reader)',
-  };
-  if (process.env.GITHUB_TOKEN) {
-    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
-  }
-  return headers;
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: buildHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return await response.json() as T;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function fetchText(url: string): Promise<string> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: buildHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return await response.text();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function runWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  worker: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let nextIndex = 0;
-
-  const runWorker = async () => {
-    while (nextIndex < items.length) {
-      const currentIndex = nextIndex++;
-      results[currentIndex] = await worker(items[currentIndex]);
-    }
-  };
-
-  const workers = Array.from(
-    { length: Math.min(limit, items.length) },
-    () => runWorker()
-  );
-  await Promise.all(workers);
-  return results;
-}
+const GITHUB_HEADERS = buildHeaders(
+  'swift-patterns-mcp/1.0 (GitHub Reader)',
+  process.env.GITHUB_TOKEN
+);
 
 function isContentPath(filePath: string): boolean {
   const lower = filePath.toLowerCase();
@@ -191,7 +131,8 @@ export class PointFreeSource {
   private async getDefaultBranch(): Promise<string> {
     try {
       const repoInfo = await fetchJson<GitHubRepoResponse>(
-        `https://api.github.com/repos/${POINTFREE_OWNER}/${POINTFREE_REPO}`
+        `https://api.github.com/repos/${POINTFREE_OWNER}/${POINTFREE_REPO}`,
+        { headers: GITHUB_HEADERS }
       );
       return repoInfo.default_branch || 'main';
     } catch {
@@ -204,7 +145,8 @@ export class PointFreeSource {
     const cached = await rssCache.get<GitHubTreeEntry[]>(cacheKey);
     if (cached) return cached;
     const tree = await fetchJson<GitHubTreeResponse>(
-      `https://api.github.com/repos/${POINTFREE_OWNER}/${POINTFREE_REPO}/git/trees/${branch}?recursive=1`
+      `https://api.github.com/repos/${POINTFREE_OWNER}/${POINTFREE_REPO}/git/trees/${branch}?recursive=1`,
+      { headers: GITHUB_HEADERS }
     );
     const entries = tree.tree ?? [];
     await rssCache.set(cacheKey, entries, POINTFREE_TREE_TTL);
@@ -229,7 +171,7 @@ export class PointFreeSource {
     const rawUrl = `https://raw.githubusercontent.com/${POINTFREE_OWNER}/${POINTFREE_REPO}/${branch}/${filePath}`;
     const cached = await articleCache.get<string>(rawUrl);
     if (cached) return cached;
-    const content = await fetchText(rawUrl);
+    const content = await fetchText(rawUrl, { headers: GITHUB_HEADERS });
     await articleCache.set(rawUrl, content, POINTFREE_FILE_TTL);
     return content;
   }

@@ -1,6 +1,6 @@
 // src/sources/free/nilcoalescing.ts
 
-import { RssPatternSource, BasePattern } from './rssPatternSource.js';
+import { RssPatternSource } from './rssPatternSource.js';
 import { BASE_TOPIC_KEYWORDS, BASE_QUALITY_SIGNALS, mergeKeywords, mergeQualitySignals } from '../../config/swift-keywords.js';
 
 export interface NilCoalescingPattern extends BasePattern {}
@@ -37,10 +37,6 @@ export class NilCoalescingSource extends RssPatternSource<NilCoalescingPattern> 
       topicKeywords: nilCoalescingTopicKeywords,
       qualitySignals: nilCoalescingQualitySignals,
     });
-  }
-
-  protected makePattern(obj: BasePattern): NilCoalescingPattern {
-    return { ...obj };
   }
 }
 
