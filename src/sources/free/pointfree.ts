@@ -231,7 +231,12 @@ export class PointFreeSource {
     );
 
     const patterns = results
-      .filter((result): result is PromiseFulfilledResult<PointFreePattern> => result.status === 'fulfilled')
+      .filter((result): result is PromiseFulfilledResult<PointFreePattern> => {
+        if (result.status === 'rejected') {
+          console.error(`Failed to fetch file from Point-Free repository:`, result.reason);
+        }
+        return result.status === 'fulfilled';
+      })
       .map(result => result.value);
 
     await rssCache.set(POINTFREE_CACHE_KEY, patterns, POINTFREE_CACHE_TTL);
