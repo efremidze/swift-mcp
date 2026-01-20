@@ -329,12 +329,6 @@ swift-patterns-mcp setup
 - Re-authenticate: `swift-patterns-mcp auth patreon`
 - Check Patreon source is enabled: `swift-patterns-mcp source list`
 
-### Getting Help
-
-- 📖 [Full Documentation](docs/)
-- 🐛 [Report Issues](./issues)
-- 💬 [Discussions](./discussions)
-
 ## 🗺️ Roadmap
 
 ### Current (v1.x)
