@@ -1,10 +1,10 @@
 {
   "name": "swift-patterns-mcp",
   "version": "1.0.2",
-  "description": "MCP server for Swift/SwiftUI learning with curated patterns from top iOS developers. Optional Patreon integration for premium content.",
+  "description": "MCP server providing curated Swift/SwiftUI best practices from leading iOS developers, including patterns and real-world code examples from Swift by Sundell, SwiftLee, and other trusted sources.",
   "type": "module",
   "bin": {
-    "swift-mcp": "build/index.js"
+    "swift-patterns-mcp": "build/index.js"
   },
   "files": [
     "build/**",
@@ -42,11 +42,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/efremidze/swift-mcp.git"
+    "url": "git+https://github.com/efremidze/swift-patterns-mcp.git"
   },
-  "homepage": "https://github.com/efremidze/swift-mcp#readme",
+  "homepage": "https://github.com/efremidze/swift-patterns-mcp#readme",
   "bugs": {
-    "url": "https://github.com/efremidze/swift-mcp/issues"
+    "url": "https://github.com/efremidze/swift-patterns-mcp/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
