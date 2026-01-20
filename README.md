@@ -2,7 +2,7 @@
 
 ### 🎯 Curated Swift/SwiftUI Patterns from Top iOS Developers
 
-**An MCP server providing curated Swift and SwiftUI best practices from leading iOS developers, including patterns and real-world code examples from Swift by Sundell, SwiftLee, Nil Coalescing, and other trusted sources.**
+**An MCP server providing curated Swift and SwiftUI best practices from leading iOS developers, including patterns and real-world code examples from Swift by Sundell, SwiftLee, and other trusted sources.**
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Usage](#-usage-examples) • [Contributing](#-contributing)
 
