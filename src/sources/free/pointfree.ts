@@ -1,9 +1,8 @@
 // src/sources/free/pointfree.ts
 
 import path from 'path';
-import { createHash } from 'crypto';
 import { rssCache, articleCache } from '../../utils/cache.js';
-import { SearchIndex, combineScores } from '../../utils/search.js';
+import { CachedSearchIndex } from '../../utils/search.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
 import { BASE_TOPIC_KEYWORDS, BASE_QUALITY_SIGNALS, mergeKeywords, mergeQualitySignals } from '../../config/swift-keywords.js';
 import { fetchJson, fetchText, buildHeaders } from '../../utils/http.js';
@@ -125,8 +124,7 @@ function stripFormatting(content: string): string {
 }
 
 export class PointFreeSource {
-  private searchIndex: SearchIndex<PointFreePattern> | null = null;
-  private indexedPatternsHash: string | null = null;
+  private cachedSearch = new CachedSearchIndex<PointFreePattern>(['title', 'content', 'topics']);
 
   private async getDefaultBranch(): Promise<string> {
     try {
@@ -211,36 +209,13 @@ export class PointFreeSource {
 
     await rssCache.set(POINTFREE_CACHE_KEY, patterns, POINTFREE_CACHE_TTL);
     // Invalidate search index after fetching new patterns
-    this.searchIndex = null;
-    this.indexedPatternsHash = null;
+    this.cachedSearch.invalidate();
     return patterns;
   }
 
   async searchPatterns(query: string): Promise<PointFreePattern[]> {
     const patterns = await this.fetchPatterns();
-    
-    // Create a hash to check if patterns changed (more efficient than string concatenation)
-    const patternsHash = createHash('md5')
-      .update(`${patterns.length}-${patterns.map(p => p.id).sort().join(',')}`)
-      .digest('hex');
-    
-    // Reuse search index if patterns haven't changed, otherwise create new one
-    if (!this.searchIndex || this.indexedPatternsHash !== patternsHash) {
-      this.searchIndex = new SearchIndex<PointFreePattern>(['title', 'content', 'topics']);
-      this.searchIndex.addDocuments(patterns);
-      this.indexedPatternsHash = patternsHash;
-    }
-    
-    const results = this.searchIndex.search(query, {
-      fuzzy: 0.2,
-      boost: { title: 2.5, topics: 1.8, content: 1 },
-    });
-    return results
-      .map(result => ({
-        ...result.item,
-        relevanceScore: combineScores(result.score, result.item.relevanceScore),
-      }))
-      .sort((a, b) => b.relevanceScore - a.relevanceScore);
+    return this.cachedSearch.search(patterns, query);
   }
 }
 
