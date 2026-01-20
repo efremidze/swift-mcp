@@ -6,6 +6,7 @@ import { rssCache, articleCache } from '../../utils/cache.js';
 import { SearchIndex, combineScores } from '../../utils/search.js';
 import { detectTopics as detectTopicsUtil, hasCodeContent as hasCodeContentUtil, calculateRelevance as calculateRelevanceUtil } from '../../utils/swift-analysis.js';
 import { fetchText, buildHeaders } from '../../utils/http.js';
+import { logError } from '../../utils/errors.js';
 
 export interface BasePattern {
   id: string;
@@ -59,7 +60,7 @@ export abstract class RssPatternSource<T extends BasePattern> {
       this.indexedPatternsHash = null;
       return patterns;
     } catch (error) {
-      console.error('Failed to fetch RSS content:', error);
+      logError('RSS Pattern Source', error, { feedUrl: this.options.feedUrl });
       return [];
     }
   }

@@ -3,24 +3,20 @@
 import type { ToolHandler } from '../types.js';
 import { getSources, type FreeSourceName } from '../../utils/source-registry.js';
 import { formatTopicPatterns } from '../../utils/pattern-formatter.js';
+import { createTextResponse } from '../../utils/response-helpers.js';
 
 export const getSwiftPatternHandler: ToolHandler = async (args, context) => {
   const topic = args?.topic as string;
 
   if (!topic) {
-    return {
-      content: [{
-        type: "text",
-        text: `Missing required argument: topic
+    return createTextResponse(`Missing required argument: topic
 
 Usage: get_swift_pattern({ topic: "swiftui" })
 
 Example topics:
 - swiftui, concurrency, testing, networking
 - performance, architecture, protocols
-- async-await, combine, coredata`,
-      }],
-    };
+- async-await, combine, coredata`);
   }
 
   const source = (args?.source as string) || "all";
@@ -40,10 +36,7 @@ Example topics:
     .filter(p => p.relevanceScore >= minQuality);
 
   if (results.length === 0) {
-    return {
-      content: [{
-        type: "text",
-        text: `No patterns found for "${topic}" with quality ≥ ${minQuality}.
+    return createTextResponse(`No patterns found for "${topic}" with quality ≥ ${minQuality}.
 
 Try:
 - Broader search terms
@@ -51,9 +44,7 @@ Try:
 - Different topic
 
 Available sources: Swift by Sundell, Antoine van der Lee, Nil Coalescing, Point-Free
-${context.sourceManager.isSourceConfigured('patreon') ? '\n💡 Enable Patreon for more premium content!' : ''}`,
-      }],
-    };
+${context.sourceManager.isSourceConfigured('patreon') ? '\n💡 Enable Patreon for more premium content!' : ''}`);
   }
 
   // Sort by relevance
@@ -68,10 +59,5 @@ ${context.sourceManager.isSourceConfigured('patreon') ? '\n💡 Enable Patreon f
     excerptLength: 300,
   });
 
-  return {
-    content: [{
-      type: "text",
-      text: formatted,
-    }],
-  };
+  return createTextResponse(formatted);
 };

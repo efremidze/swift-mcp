@@ -14,6 +14,7 @@ import {
 
 import SourceManager from "./config/sources.js";
 import { getHandler, ToolContext } from './tools/index.js';
+import { createTextResponse, createErrorResponseFromError } from './utils/response-helpers.js';
 
 // Premium sources (imported conditionally)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -178,40 +179,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case "setup_patreon": {
         if (!patreonSource) {
-          return {
-            content: [{
-              type: "text",
-              text: `❌ Patreon integration not available.
+          return createTextResponse(`❌ Patreon integration not available.
 
 Please ensure:
 1. PATREON_CLIENT_ID is set in environment
 2. PATREON_CLIENT_SECRET is set in environment
 
-Get credentials at: https://www.patreon.com/portal/registration/register-clients`,
-            }],
-          };
+Get credentials at: https://www.patreon.com/portal/registration/register-clients`);
         }
 
         const action = (args?.action as string) || "start";
 
         if (action === "status") {
           const isConfigured = sourceManager.isSourceConfigured('patreon');
-          return {
-            content: [{
-              type: "text",
-              text: isConfigured
-                ? `✅ Patreon is configured and ready to use!`
-                : `⚙️ Patreon is not yet configured.
+          return createTextResponse(isConfigured
+            ? `✅ Patreon is configured and ready to use!`
+            : `⚙️ Patreon is not yet configured.
 
-Run: swift-patterns-mcp setup --patreon`,
-            }],
-          };
+Run: swift-patterns-mcp setup --patreon`);
         }
 
-        return {
-          content: [{
-            type: "text",
-            text: `⚙️ Patreon Setup
+        return createTextResponse(`⚙️ Patreon Setup
 
 To set up Patreon integration, run:
 \`\`\`bash
@@ -227,30 +215,18 @@ This will:
 After setup, you'll have access to:
 - High-quality patterns from creators you support
 - Automatic code extraction from zips
-- Advanced filtering and search`,
-          }],
-        };
+- Advanced filtering and search`);
       }
 
       case "get_patreon_patterns": {
         if (!sourceManager.isSourceConfigured('patreon')) {
-          return {
-            content: [{
-              type: "text",
-              text: `⚙️ Patreon not configured.
+          return createTextResponse(`⚙️ Patreon not configured.
 
-Set it up with: swift-patterns-mcp setup --patreon`,
-            }],
-          };
+Set it up with: swift-patterns-mcp setup --patreon`);
         }
 
         if (!patreonSource) {
-          return {
-            content: [{
-              type: "text",
-              text: `❌ Patreon module not available. Check your installation.`,
-            }],
-          };
+          return createTextResponse(`❌ Patreon module not available. Check your installation.`);
         }
 
         const topic = args?.topic as string;
@@ -267,12 +243,7 @@ Set it up with: swift-patterns-mcp setup --patreon`,
         }
 
         if (patterns.length === 0) {
-          return {
-            content: [{
-              type: "text",
-              text: `No Patreon patterns found${topic ? ` for "${topic}"` : ''}${requireCode ? ' with code' : ''}.`,
-            }],
-          };
+          return createTextResponse(`No Patreon patterns found${topic ? ` for "${topic}"` : ''}${requireCode ? ' with code' : ''}.`);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -288,32 +259,20 @@ ${p.excerpt}...
 **[Read full post](${p.url})**
 `).join('\n---\n');
 
-        return {
-          content: [{
-            type: "text",
-            text: `# Patreon Patterns${topic ? `: ${topic}` : ''}
+        return createTextResponse(`# Patreon Patterns${topic ? `: ${topic}` : ''}
 
 Found ${patterns.length} posts from your subscriptions:
 
 ${formatted}
 
-${patterns.length > 10 ? `\n*Showing top 10 of ${patterns.length} results*` : ''}`,
-          }],
-        };
+${patterns.length > 10 ? `\n*Showing top 10 of ${patterns.length} results*` : ''}`);
       }
 
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [{
-        type: "text",
-        text: `Error: ${errorMessage}`,
-      }],
-      isError: true,
-    };
+    return createErrorResponseFromError(error);
   }
 });
 

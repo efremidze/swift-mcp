@@ -3,20 +3,16 @@
 import type { ToolHandler } from '../types.js';
 import { searchMultipleSources } from '../../utils/source-registry.js';
 import { formatSearchPatterns } from '../../utils/pattern-formatter.js';
+import { createTextResponse } from '../../utils/response-helpers.js';
 
 export const searchSwiftContentHandler: ToolHandler = async (args) => {
   const query = args?.query as string;
   const requireCode = args?.requireCode as boolean;
 
   if (!query) {
-    return {
-      content: [{
-        type: "text",
-        text: `Missing required argument: query
+    return createTextResponse(`Missing required argument: query
 
-Usage: search_swift_content({ query: "async await" })`,
-      }],
-    };
+Usage: search_swift_content({ query: "async await" })`);
   }
 
   // Search all free sources in parallel
@@ -28,12 +24,7 @@ Usage: search_swift_content({ query: "async await" })`,
     : results;
 
   if (filtered.length === 0) {
-    return {
-      content: [{
-        type: "text",
-        text: `No results found for "${query}"${requireCode ? ' with code examples' : ''}.`,
-      }],
-    };
+    return createTextResponse(`No results found for "${query}"${requireCode ? ' with code examples' : ''}.`);
   }
 
   // Format using shared utility
@@ -43,10 +34,5 @@ Usage: search_swift_content({ query: "async await" })`,
     excerptLength: 200,
   });
 
-  return {
-    content: [{
-      type: "text",
-      text: formatted,
-    }],
-  };
+  return createTextResponse(formatted);
 };
