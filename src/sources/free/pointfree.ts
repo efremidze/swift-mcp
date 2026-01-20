@@ -29,6 +29,7 @@ const POINTFREE_REPO = 'pointfreeco';
 const POINTFREE_CACHE_KEY = 'pointfree-patterns';
 const POINTFREE_CACHE_TTL = 3600;
 const MAX_FILES = 160;
+const CONCURRENCY_LIMIT = 10;
 
 const markdownExtensions = new Set(['.md', '.markdown', '.mdown']);
 const excludedPathFragments = [
@@ -159,6 +160,20 @@ function stripFormatting(content: string): string {
     .trim();
 }
 
+async function processBatched<T, R>(
+  items: T[],
+  processor: (item: T) => Promise<R>,
+  concurrencyLimit: number
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += concurrencyLimit) {
+    const batch = items.slice(i, i + concurrencyLimit);
+    const batchResults = await Promise.all(batch.map(processor));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 export class PointFreeSource {
   private async getDefaultBranch(): Promise<string> {
     try {
@@ -204,8 +219,9 @@ export class PointFreeSource {
     const branch = await this.getDefaultBranch();
     const { branch: resolvedBranch, files } = await this.fetchContentFiles(branch);
 
-    const patterns = await Promise.all(
-      files.map(async file => {
+    const patterns = await processBatched(
+      files,
+      async file => {
         const content = await this.fetchFileContent(resolvedBranch, file.path);
         const title = extractTitle(file.path, content);
         const stripped = stripFormatting(content);
@@ -227,7 +243,8 @@ export class PointFreeSource {
           hasCode,
           sourcePath: file.path,
         };
-      })
+      },
+      CONCURRENCY_LIMIT
     );
 
     await rssCache.set(POINTFREE_CACHE_KEY, patterns, POINTFREE_CACHE_TTL);
