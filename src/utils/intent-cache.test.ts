@@ -25,7 +25,8 @@ describe('IntentCache', () => {
     });
 
     it('should remove stopwords', () => {
-      expect(cache.normalizeQuery('how to use async await')).toBe('async await');
+      // "how" and "to" are stopwords, but "use" is not
+      expect(cache.normalizeQuery('how to use async await')).toBe('async await use');
     });
 
     it('should preserve Swift technical terms', () => {
