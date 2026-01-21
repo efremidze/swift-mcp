@@ -54,6 +54,7 @@ const testQualitySignals = {
   'swiftui': 6,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface TestPattern extends BasePattern {}
 
 class TestSource extends RssPatternSource<TestPattern> {
