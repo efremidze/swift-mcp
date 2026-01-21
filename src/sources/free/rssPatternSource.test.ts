@@ -65,9 +65,6 @@ class TestSource extends RssPatternSource<TestPattern> {
       qualitySignals: testQualitySignals,
     });
   }
-  protected makePattern(obj: BasePattern): TestPattern {
-    return { ...obj };
-  }
 }
 
 describe('RssPatternSource', () => {

@@ -2,8 +2,10 @@
 
 import Parser from 'rss-parser';
 import { rssCache, articleCache } from '../../utils/cache.js';
-import { SearchIndex, combineScores } from '../../utils/search.js';
+import { CachedSearchIndex } from '../../utils/search.js';
 import { detectTopics as detectTopicsUtil, hasCodeContent as hasCodeContentUtil, calculateRelevance as calculateRelevanceUtil } from '../../utils/swift-analysis.js';
+import { fetchText, buildHeaders } from '../../utils/http.js';
+import { logError } from '../../utils/errors.js';
 
 export interface BasePattern {
   id: string;
@@ -31,6 +33,7 @@ export interface RssPatternSourceOptions {
 export abstract class RssPatternSource<T extends BasePattern> {
   protected parser = new Parser();
   protected options: RssPatternSourceOptions;
+  private cachedSearch = new CachedSearchIndex<T>(['title', 'content', 'topics']);
 
   constructor(options: RssPatternSourceOptions) {
     this.options = options;
@@ -41,16 +44,20 @@ export abstract class RssPatternSource<T extends BasePattern> {
       const { cacheKey, rssCacheTtl = 3600, fetchFullArticle } = this.options;
       const cached = await rssCache.get<T[]>(cacheKey);
       if (cached) return cached;
+      
       const feed = await this.parser.parseURL(this.options.feedUrl);
       const patterns = await Promise.all(
         feed.items.map(item =>
           fetchFullArticle ? this.processArticle(item) : this.processRssItem(item)
         )
       );
+      
       await rssCache.set(cacheKey, patterns, rssCacheTtl);
+      // Invalidate search index after fetching new patterns
+      this.cachedSearch.invalidate();
       return patterns;
     } catch (error) {
-      console.error('Failed to fetch RSS content:', error);
+      logError('RSS Pattern Source', error, { feedUrl: this.options.feedUrl });
       return [];
     }
   }
@@ -106,21 +113,12 @@ export abstract class RssPatternSource<T extends BasePattern> {
     const { articleCacheTtl = 86400, extractContentFn } = this.options;
     const cached = await articleCache.get<string>(url);
     if (cached) return cached;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: { 'User-Agent': 'swift-patterns-mcp/1.0 (RSS Reader)' },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const html = await response.text();
-      const content = extractContentFn ? extractContentFn(html) : html;
-      await articleCache.set(url, content, articleCacheTtl);
-      return content;
-    } finally {
-      clearTimeout(timeout);
-    }
+    
+    const headers = buildHeaders('swift-patterns-mcp/1.0 (RSS Reader)');
+    const html = await fetchText(url, { headers });
+    const content = extractContentFn ? extractContentFn(html) : html;
+    await articleCache.set(url, content, articleCacheTtl);
+    return content;
   }
 
   protected detectTopics(text: string): string[] {
@@ -137,20 +135,12 @@ export abstract class RssPatternSource<T extends BasePattern> {
 
   async searchPatterns(query: string): Promise<T[]> {
     const patterns = await this.fetchPatterns();
-    const searchIndex = new SearchIndex<T>(['title', 'content', 'topics']);
-    searchIndex.addDocuments(patterns);
-    const results = searchIndex.search(query, {
-      fuzzy: 0.2,
-      boost: { title: 2.5, topics: 1.8, content: 1 },
-    });
-    return results
-      .map(result => ({
-        ...result.item,
-        relevanceScore: combineScores(result.score, result.item.relevanceScore),
-      }))
-      .sort((a, b) => b.relevanceScore - a.relevanceScore);
+    return this.cachedSearch.search(patterns, query);
   }
 
-  // To be implemented by subclass to cast to correct type
-  protected abstract makePattern(obj: BasePattern): T;
+  // Override in subclass if custom transformation is needed
+  // Default implementation just spreads the object (works for most cases)
+  protected makePattern(obj: BasePattern): T {
+    return { ...obj } as T;
+  }
 }
