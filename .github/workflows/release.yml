@@ -3,10 +3,14 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to release (e.g., 1.2.3)'
+      bump:
+        description: 'Version bump (patch, minor, major)'
         required: true
-        type: string
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 permissions:
   contents: write
@@ -42,7 +46,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Bump version
-        run: npm version "${{ inputs.version }}" -m "chore(release): %s"
+        run: npm version "${{ inputs.bump }}" -m "chore(release): %s"
 
       - name: Push tags
         run: git push --follow-tags
