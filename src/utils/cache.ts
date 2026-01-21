@@ -3,9 +3,12 @@
 import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
+import QuickLRU from 'quick-lru';
 import { getCacheDir } from './paths.js';
 
 const DEFAULT_TTL = 86400; // 24 hours in seconds
+const DEFAULT_MAX_MEMORY_ENTRIES = 100;
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 interface CacheEntry<T> {
   data: T;
@@ -15,11 +18,27 @@ interface CacheEntry<T> {
 
 export class FileCache {
   private cacheDir: string;
-  private memoryCache: Map<string, CacheEntry<unknown>> = new Map();
+  private memoryCache: QuickLRU<string, CacheEntry<unknown>>;
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
-  constructor(namespace: string = 'default') {
+  constructor(namespace: string = 'default', maxMemoryEntries: number = DEFAULT_MAX_MEMORY_ENTRIES) {
     this.cacheDir = getCacheDir(namespace);
+    this.memoryCache = new QuickLRU({ maxSize: maxMemoryEntries });
     this.ensureCacheDir();
+    // Clean expired entries on startup
+    this.clearExpired();
+    // Start periodic cleanup
+    this.startPeriodicCleanup();
+  }
+
+  private startPeriodicCleanup(): void {
+    // Avoid multiple intervals if constructor is called multiple times
+    if (this.cleanupInterval) return;
+    this.cleanupInterval = setInterval(() => {
+      this.clearExpired();
+    }, CLEANUP_INTERVAL_MS);
+    // Don't keep the process alive just for cleanup
+    this.cleanupInterval.unref();
   }
 
   private ensureCacheDir(): void {
@@ -72,9 +91,10 @@ export class FileCache {
   }
 
   async set<T>(key: string, data: T, ttl: number = DEFAULT_TTL): Promise<void> {
+    const now = Date.now();
     const entry: CacheEntry<T> = {
       data,
-      timestamp: Date.now(),
+      timestamp: now,
       ttl,
     };
 
@@ -88,21 +108,6 @@ export class FileCache {
     } catch {
       // Cache write failed, continue without caching
     }
-  }
-
-  async getOrFetch<T>(
-    key: string,
-    fetcher: () => Promise<T>,
-    ttl: number = DEFAULT_TTL
-  ): Promise<T> {
-    const cached = await this.get<T>(key);
-    if (cached !== null) {
-      return cached;
-    }
-
-    const data = await fetcher();
-    await this.set(key, data, ttl);
-    return data;
   }
 
   private isExpired(entry: CacheEntry<unknown>): boolean {
@@ -131,7 +136,7 @@ export class FileCache {
     let cleared = 0;
 
     // Clear expired from memory
-    for (const [key, entry] of this.memoryCache.entries()) {
+    for (const [key, entry] of this.memoryCache) {
       if (this.isExpired(entry)) {
         this.memoryCache.delete(key);
         cleared++;

@@ -3,12 +3,57 @@
 import type SourceManager from '../config/sources.js';
 
 /**
+ * Pattern returned by Patreon source
+ */
+export interface PatreonPattern {
+  id: string;
+  title: string;
+  url: string;
+  publishDate: string;
+  excerpt: string;
+  content: string;
+  creator: string;
+  topics: string[];
+  relevanceScore: number;
+  hasCode: boolean;
+}
+
+/**
+ * Creator info from Patreon
+ */
+export interface CreatorInfo {
+  id: string;
+  name: string;
+  url: string;
+  isSwiftRelated: boolean;
+}
+
+/**
+ * Interface for PatreonSource class instances
+ */
+export interface PatreonSourceInstance {
+  isConfigured(): Promise<boolean>;
+  isAvailable(): boolean;
+  getSubscribedCreators(): Promise<CreatorInfo[]>;
+  detectSwiftCreators(): Promise<CreatorInfo[]>;
+  fetchPatterns(creatorId?: string): Promise<PatreonPattern[]>;
+  searchPatterns(query: string): Promise<PatreonPattern[]>;
+  saveEnabledCreators(creatorIds: string[]): void;
+}
+
+/**
+ * Constructor type for PatreonSource class
+ */
+export interface PatreonSourceConstructor {
+  new (): PatreonSourceInstance;
+}
+
+/**
  * Context passed to tool handlers
  */
 export interface ToolContext {
   sourceManager: SourceManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  patreonSource: any;
+  patreonSource: PatreonSourceConstructor | null;
 }
 
 /**

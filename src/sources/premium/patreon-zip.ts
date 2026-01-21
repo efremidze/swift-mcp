@@ -5,7 +5,8 @@ import fs from 'fs';
 import path from 'path';
 import { getCacheDir } from '../../utils/paths.js';
 import { detectTopics, hasCodeContent } from '../../utils/swift-analysis.js';
-import { BASE_TOPIC_KEYWORDS, mergeKeywords } from '../../config/swift-keywords.js';
+import { createSourceConfig } from '../../config/swift-keywords.js';
+import { logError } from '../../utils/errors.js';
 
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_FILES = 100;
@@ -24,16 +25,16 @@ export interface ZipExtractionResult {
   warnings: string[];
 }
 
-// Zip-specific keywords (extends base with more detailed patterns)
-const zipSpecificTopics: Record<string, string[]> = {
-  'concurrency': ['sendable'], // Adds to base
-  'networking': ['request'], // Adds to base
-  'testing': ['stub'], // Adds to base
-  'architecture': ['repository', 'usecase'], // Adds to base
-  'uikit': ['uitableview', 'uicollectionview'], // Adds to base
-};
-
-const zipTopicKeywords = mergeKeywords(BASE_TOPIC_KEYWORDS, zipSpecificTopics);
+const { topicKeywords: zipTopicKeywords } = createSourceConfig(
+  {
+    'concurrency': ['sendable'],
+    'networking': ['request'],
+    'testing': ['stub'],
+    'architecture': ['repository', 'usecase'],
+    'uikit': ['uitableview', 'uicollectionview'],
+  },
+  {}
+);
 
 function detectFileType(filename: string): ExtractedPattern['type'] {
   const ext = path.extname(filename).toLowerCase();
@@ -64,13 +65,12 @@ export async function downloadZip(
     });
 
     if (!response.ok) {
-      console.error(`Failed to download zip: ${response.status}`);
+      logError('Patreon Zip', `Download failed: ${response.status}`, { postId });
       return null;
     }
 
     const contentLength = response.headers.get('content-length');
     if (contentLength && parseInt(contentLength, 10) > MAX_ZIP_SIZE) {
-      console.warn(`Zip file too large (${contentLength} bytes), skipping`);
       return null;
     }
 
@@ -82,7 +82,7 @@ export async function downloadZip(
 
     return zipPath;
   } catch (error) {
-    console.error('Zip download failed:', error);
+    logError('Patreon Zip', error, { postId });
     return null;
   }
 }
