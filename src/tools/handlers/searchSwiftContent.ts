@@ -4,7 +4,7 @@ import type { ToolHandler } from '../types.js';
 import { searchMultipleSources, getSourceNames } from '../../utils/source-registry.js';
 import { formatSearchPatterns } from '../../utils/pattern-formatter.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
-import { intentCache, type IntentKey, type CachedIntentResultWithPatterns, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
+import { intentCache, type IntentKey, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
 
 export const searchSwiftContentHandler: ToolHandler = async (args) => {
@@ -34,8 +34,7 @@ Usage: search_swift_content({ query: "async await" })`);
 
   if (cached) {
     // Cache hit - use cached patterns
-    const cachedWithPatterns = cached as CachedIntentResultWithPatterns;
-    filtered = (cachedWithPatterns.patterns as BasePattern[]) || [];
+    filtered = (cached.patterns as BasePattern[]) || [];
   } else {
     // Cache miss - fetch from sources
     const results = await searchMultipleSources(query);

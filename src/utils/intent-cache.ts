@@ -43,7 +43,7 @@ export interface IntentKey {
 }
 
 /**
- * Cached result metadata (not full patterns)
+ * Cached search result with all required fields
  */
 export interface CachedIntentResult {
   patternIds: string[];           // Pattern IDs in order
@@ -51,14 +51,7 @@ export interface CachedIntentResult {
   sourceFingerprint: string;      // Hash of sources at cache time
   timestamp: number;              // Cache creation time
   totalCount: number;             // Total patterns before any limits
-}
-
-/**
- * Extended cached result with full pattern data
- * Used by handlers that need to reconstruct full patterns from cache
- */
-export interface CachedIntentResultWithPatterns extends CachedIntentResult {
-  patterns?: unknown[]; // Optional - full pattern objects when present
+  patterns?: unknown[];           // Optional - full pattern objects when stored
 }
 
 /**
@@ -69,7 +62,7 @@ export interface StorableCachedSearchResult {
   patternIds: string[];
   scores: Record<string, number>;
   totalCount: number;
-  patterns?: unknown[]; // Optional - patterns field for full pattern storage
+  patterns?: unknown[];
 }
 
 /**
@@ -225,7 +218,7 @@ export class IntentCache {
     intent: IntentKey,
     fetcher: () => Promise<StorableCachedSearchResult>,
     ttl: number = DEFAULT_INTENT_TTL
-  ): Promise<CachedIntentResultWithPatterns> {
+  ): Promise<CachedIntentResult> {
     // Check cache first
     const cached = await this.get(intent);
     if (cached) {

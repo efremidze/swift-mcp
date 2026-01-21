@@ -4,7 +4,7 @@ import type { ToolHandler } from '../types.js';
 import { getSources, getSourceNames, type FreeSourceName } from '../../utils/source-registry.js';
 import { formatTopicPatterns } from '../../utils/pattern-formatter.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
-import { intentCache, type IntentKey, type CachedIntentResultWithPatterns, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
+import { intentCache, type IntentKey, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
 
 export const getSwiftPatternHandler: ToolHandler = async (args, context) => {
@@ -39,8 +39,7 @@ Example topics:
 
   if (cached) {
     // Cache hit - use cached patterns
-    const cachedWithPatterns = cached as CachedIntentResultWithPatterns;
-    results = (cachedWithPatterns.patterns as BasePattern[]) || [];
+    results = (cached.patterns as BasePattern[]) || [];
   } else {
     // Cache miss - fetch from sources
     const sources = getSources(source as FreeSourceName | 'all');
