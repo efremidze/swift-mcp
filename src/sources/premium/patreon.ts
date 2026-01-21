@@ -8,6 +8,7 @@ import { getPatreonCreatorsPath } from '../../utils/paths.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
 import { createSourceConfig } from '../../config/swift-keywords.js';
 import { logError } from '../../utils/errors.js';
+import { fetch } from '../../utils/fetch.js';
 import fs from 'fs';
 import path from 'path';
 

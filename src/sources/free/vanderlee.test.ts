@@ -3,6 +3,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import VanderLeeSource from './vanderlee.js';
 
+const mockFetch = vi.hoisted(() => vi.fn());
+
+vi.mock('../../utils/fetch.js', () => ({
+  fetch: (...args: unknown[]) => mockFetch(...args),
+}));
+
 vi.mock('rss-parser', () => {
   return {
     default: class Parser {
@@ -43,15 +49,14 @@ vi.mock('../../utils/cache.js', () => ({
   },
 }));
 
-// Mock fetch for full article content
-vi.stubGlobal('fetch', vi.fn(async (url) => ({
-  ok: true,
-  text: async () => '<div class="post-content">Full article <code>let y = 2</code></div><div></div>',
-})));
-
 describe('VanderLeeSource', () => {
   let source: VanderLeeSource;
   beforeEach(() => {
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      text: async () => '<div class="post-content">Full article <code>let y = 2</code></div><div></div>',
+    });
     source = new VanderLeeSource();
   });
 

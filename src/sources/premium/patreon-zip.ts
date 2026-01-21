@@ -7,6 +7,7 @@ import { getCacheDir } from '../../utils/paths.js';
 import { detectTopics, hasCodeContent } from '../../utils/swift-analysis.js';
 import { createSourceConfig } from '../../config/swift-keywords.js';
 import { logError } from '../../utils/errors.js';
+import { fetch } from '../../utils/fetch.js';
 
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_FILES = 100;

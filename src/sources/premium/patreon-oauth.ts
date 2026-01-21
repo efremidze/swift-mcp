@@ -7,6 +7,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import fs from 'fs/promises';
 import keytar from 'keytar';
+import { fetch } from '../../utils/fetch.js';
 
 const SERVICE_NAME = 'swift-patterns-mcp';
 const ACCOUNT_NAME = 'patreon-tokens';

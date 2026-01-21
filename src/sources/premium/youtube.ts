@@ -2,6 +2,7 @@
 // YouTube Data API client
 
 import { logError } from '../../utils/errors.js';
+import { fetch } from '../../utils/fetch.js';
 
 const API_BASE = 'https://www.googleapis.com/youtube/v3';
 
