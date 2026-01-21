@@ -1,59 +1,71 @@
 // src/tools/handlers/searchSwiftContent.ts
 
 import type { ToolHandler } from '../types.js';
+import { searchMultipleSources, getSourceNames } from '../../utils/source-registry.js';
+import { formatSearchPatterns } from '../../utils/pattern-formatter.js';
+import { createTextResponse } from '../../utils/response-helpers.js';
+import { intentCache, type IntentKey } from '../../utils/intent-cache.js';
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
-import SundellSource from '../../sources/free/sundell.js';
-import VanderLeeSource from '../../sources/free/vanderlee.js';
-import NilCoalescingSource from '../../sources/free/nilcoalescing.js';
 
 export const searchSwiftContentHandler: ToolHandler = async (args) => {
   const query = args?.query as string;
   const requireCode = args?.requireCode as boolean;
 
-  const results: BasePattern[] = [];
+  if (!query) {
+    return createTextResponse(`Missing required argument: query
 
-  // Search all enabled free sources
-  const sundell = new SundellSource();
-  const sundellResults = await sundell.searchPatterns(query);
-  results.push(...sundellResults);
-
-  const vanderlee = new VanderLeeSource();
-  const vanderLeeResults = await vanderlee.searchPatterns(query);
-  results.push(...vanderLeeResults);
-
-  const nilCoalescing = new NilCoalescingSource();
-  const nilCoalescingResults = await nilCoalescing.searchPatterns(query);
-  results.push(...nilCoalescingResults);
-
-  // Filter by code if requested
-  const filtered = requireCode
-    ? results.filter(r => r.hasCode)
-    : results;
-
-  if (filtered.length === 0) {
-    return {
-      content: [{
-        type: "text",
-        text: `No results found for "${query}"${requireCode ? ' with code examples' : ''}.`,
-      }],
-    };
+Usage: search_swift_content({ query: "async await" })`);
   }
 
-  const formatted = filtered.slice(0, 10).map(r => `
-## ${r.title}
-**Source**: ${r.id.split('-')[0]}
-${r.hasCode ? '**Code**: ✅' : ''}
-${r.excerpt.substring(0, 200)}...
-[Read more](${r.url})
-`).join('\n---\n');
-
-  return {
-    content: [{
-      type: "text",
-      text: `# Search Results: "${query}"
-
-${formatted}
-`,
-    }],
+  // Build intent key for caching
+  // This handler always uses 'all' sources and default minQuality of 0
+  const intentKey: IntentKey = {
+    tool: 'search_swift_content',
+    query,
+    minQuality: 0,
+    sources: getSourceNames('all'),
+    requireCode: requireCode || false,
   };
+
+  // Try to get cached result
+  const cached = await intentCache.get(intentKey);
+
+  let filtered: BasePattern[];
+
+  if (cached) {
+    // Cache hit - use cached patterns
+    const cachedData = cached as unknown as { patterns?: BasePattern[] };
+    filtered = cachedData.patterns || [];
+  } else {
+    // Cache miss - fetch from sources
+    const results = await searchMultipleSources(query);
+
+    // Filter by code if requested
+    filtered = requireCode
+      ? results.filter(r => r.hasCode)
+      : results;
+
+    // Cache the results
+    if (filtered.length > 0) {
+      await intentCache.set(intentKey, {
+        patternIds: filtered.map(p => p.id),
+        scores: Object.fromEntries(filtered.map(p => [p.id, p.relevanceScore])),
+        totalCount: filtered.length,
+        patterns: filtered,
+      } as { patternIds: string[]; scores: Record<string, number>; totalCount: number; patterns: BasePattern[] });
+    }
+  }
+
+  if (filtered.length === 0) {
+    return createTextResponse(`No results found for "${query}"${requireCode ? ' with code examples' : ''}.`);
+  }
+
+  // Format using shared utility
+  const formatted = formatSearchPatterns(filtered, query, {
+    maxResults: 10,
+    includeCode: true,
+    excerptLength: 200,
+  });
+
+  return createTextResponse(formatted);
 };

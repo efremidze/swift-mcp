@@ -1,6 +1,7 @@
 // src/tools/handlers/listContentSources.ts
 
 import type { ToolHandler } from '../types.js';
+import { createTextResponse } from '../../utils/response-helpers.js';
 
 export const listContentSourcesHandler: ToolHandler = async (_args, context) => {
   const allSources = context.sourceManager.getAllSources();
@@ -19,10 +20,7 @@ export const listContentSourcesHandler: ToolHandler = async (_args, context) => 
     })
     .join('\n');
 
-  return {
-    content: [{
-      type: "text",
-      text: `# Content Sources
+  return createTextResponse(`# Content Sources
 
 ## Free Sources (Always Available)
 ${freeList}
@@ -37,7 +35,5 @@ To enable premium sources:
 \`\`\`
 swift-patterns-mcp setup --patreon
 \`\`\`
-`,
-    }],
-  };
+`);
 };
