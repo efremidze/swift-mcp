@@ -61,7 +61,8 @@
     "playwright": "^1.57.0",
     "quick-lru": "^7.3.0",
     "rss-parser": "^3.13.0",
-    "undici": "^7.18.2"
+    "undici": "^7.18.2",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",

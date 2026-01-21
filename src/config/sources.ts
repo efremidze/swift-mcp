@@ -2,6 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { z } from 'zod';
 import { getConfigPath } from '../utils/paths.js';
 
 export type SourceType = 'free' | 'premium';
@@ -102,6 +103,25 @@ export interface SourceConfig {
   }>;
 }
 
+const sourceConfigSchema = z.object({
+  sources: z.record(z.string(), z.object({
+    enabled: z.boolean(),
+    configured: z.boolean(),
+    lastSync: z.string().optional(),
+  })),
+});
+
+const DEFAULT_CONFIG: SourceConfig = {
+  sources: {
+    sundell: { enabled: true, configured: true },
+    vanderlee: { enabled: true, configured: true },
+    nilcoalescing: { enabled: true, configured: true },
+    pointfree: { enabled: true, configured: true },
+    patreon: { enabled: false, configured: false },
+    'github-sponsors': { enabled: false, configured: false },
+  },
+};
+
 export class SourceManager {
   private config: SourceConfig;
   private configPath: string;
@@ -114,20 +134,14 @@ export class SourceManager {
   private loadConfig(): SourceConfig {
     try {
       const data = fs.readFileSync(this.configPath, 'utf-8');
-      const parsed = JSON.parse(data) as SourceConfig;
-      return parsed;
+      const parsed = sourceConfigSchema.safeParse(JSON.parse(data));
+      if (parsed.success) {
+        return parsed.data;
+      }
+      return DEFAULT_CONFIG;
     } catch {
       // Default config
-      return {
-        sources: {
-          sundell: { enabled: true, configured: true },
-          vanderlee: { enabled: true, configured: true },
-          nilcoalescing: { enabled: true, configured: true },
-          pointfree: { enabled: true, configured: true },
-          patreon: { enabled: false, configured: false },
-          'github-sponsors': { enabled: false, configured: false },
-        },
-      };
+      return DEFAULT_CONFIG;
     }
   }
   
