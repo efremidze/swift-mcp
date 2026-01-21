@@ -2,6 +2,8 @@
  * Shared HTTP utilities for making requests with timeouts and error handling
  */
 
+import { fetch } from './fetch.js';
+
 export interface FetchOptions {
   timeout?: number;
   headers?: Record<string, string>;

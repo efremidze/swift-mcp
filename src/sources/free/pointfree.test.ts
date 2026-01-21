@@ -3,7 +3,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import PointFreeSource from './pointfree.js';
 
-const mockFetch = vi.fn();
+const mockFetch = vi.hoisted(() => vi.fn());
+
+vi.mock('../../utils/fetch.js', () => ({
+  fetch: (...args: unknown[]) => mockFetch(...args),
+}));
 
 vi.mock('../../utils/cache.js', () => ({
   rssCache: {
@@ -28,11 +32,10 @@ function createResponse(body: string | Record<string, unknown>, ok = true) {
 describe('PointFreeSource', () => {
   beforeEach(() => {
     mockFetch.mockReset();
-    vi.stubGlobal('fetch', mockFetch);
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    mockFetch.mockReset();
   });
 
   it('fetches and parses patterns from GitHub content', async () => {

@@ -246,7 +246,7 @@ Everything else is optional enhancements!
 
 ### Production
 - `@modelcontextprotocol/sdk` - MCP protocol
-- `node-fetch` - HTTP requests
+- `undici` - HTTP requests (fetch implementation)
 - `rss-parser` - RSS feed parsing
 - `adm-zip` - Zip file handling
 - `keytar` - Secure credential storage
