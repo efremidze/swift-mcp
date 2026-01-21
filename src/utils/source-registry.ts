@@ -49,12 +49,28 @@ export function getSources(sourceNames: FreeSourceName | 'all' | FreeSourceName[
   if (sourceNames === 'all') {
     return getAllFreeSources();
   }
-  
+
   if (Array.isArray(sourceNames)) {
     return sourceNames.map(name => getSource(name));
   }
-  
+
   return [getSource(sourceNames)];
+}
+
+/**
+ * Get source names for a given source parameter
+ * Used for intent cache key generation
+ */
+export function getSourceNames(sourceNames: FreeSourceName | 'all' | FreeSourceName[]): string[] {
+  if (sourceNames === 'all') {
+    return Object.keys(SOURCE_CLASSES);
+  }
+
+  if (Array.isArray(sourceNames)) {
+    return sourceNames;
+  }
+
+  return [sourceNames];
 }
 
 /**
