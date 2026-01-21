@@ -58,7 +58,18 @@ export interface CachedIntentResult {
  * Used by handlers that need to reconstruct full patterns from cache
  */
 export interface CachedIntentResultWithPatterns extends CachedIntentResult {
-  patterns: unknown[]; // Full pattern objects - type determined by caller
+  patterns?: unknown[]; // Optional - full pattern objects when present
+}
+
+/**
+ * Storable cached search result (without immutable metadata fields)
+ * Handlers use this to set cache values with complete type safety
+ */
+export interface StorableCachedSearchResult {
+  patternIds: string[];
+  scores: Record<string, number>;
+  totalCount: number;
+  patterns?: unknown[]; // Optional - patterns field for full pattern storage
 }
 
 /**
@@ -191,7 +202,7 @@ export class IntentCache {
    */
   async set(
     intent: IntentKey,
-    result: Omit<CachedIntentResult, 'sourceFingerprint' | 'timestamp'> | Omit<CachedIntentResultWithPatterns, 'sourceFingerprint' | 'timestamp'>,
+    result: StorableCachedSearchResult,
     ttl: number = DEFAULT_INTENT_TTL
   ): Promise<void> {
     const key = this.buildCacheKey(intent);
@@ -212,9 +223,9 @@ export class IntentCache {
    */
   async getOrFetch(
     intent: IntentKey,
-    fetcher: () => Promise<Omit<CachedIntentResult, 'sourceFingerprint' | 'timestamp'> | Omit<CachedIntentResultWithPatterns, 'sourceFingerprint' | 'timestamp'>>,
+    fetcher: () => Promise<StorableCachedSearchResult>,
     ttl: number = DEFAULT_INTENT_TTL
-  ): Promise<CachedIntentResult | CachedIntentResultWithPatterns> {
+  ): Promise<CachedIntentResultWithPatterns> {
     // Check cache first
     const cached = await this.get(intent);
     if (cached) {

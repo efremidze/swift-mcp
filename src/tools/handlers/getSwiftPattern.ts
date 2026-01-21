@@ -4,7 +4,7 @@ import type { ToolHandler } from '../types.js';
 import { getSources, getSourceNames, type FreeSourceName } from '../../utils/source-registry.js';
 import { formatTopicPatterns } from '../../utils/pattern-formatter.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
-import { intentCache, type IntentKey, type CachedIntentResultWithPatterns } from '../../utils/intent-cache.js';
+import { intentCache, type IntentKey, type CachedIntentResultWithPatterns, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
 
 export const getSwiftPatternHandler: ToolHandler = async (args, context) => {
@@ -60,12 +60,13 @@ Example topics:
 
     // Cache the results (patterns are already metadata, not full articles)
     if (results.length > 0) {
-      await intentCache.set(intentKey, {
+      const cacheData: StorableCachedSearchResult = {
         patternIds: results.map(p => p.id),
         scores: Object.fromEntries(results.map(p => [p.id, p.relevanceScore])),
         totalCount: results.length,
         patterns: results,
-      });
+      };
+      await intentCache.set(intentKey, cacheData);
     }
   }
 
