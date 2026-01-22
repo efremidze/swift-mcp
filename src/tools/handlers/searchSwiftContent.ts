@@ -1,7 +1,7 @@
 // src/tools/handlers/searchSwiftContent.ts
 
 import type { ToolHandler } from '../types.js';
-import { searchMultipleSources, getSourceNames, getSource, type FreeSourceName } from '../../utils/source-registry.js';
+import { searchMultipleSources, getSourceNames, fetchAllPatterns, type FreeSourceName } from '../../utils/source-registry.js';
 import { formatSearchPatterns } from '../../utils/pattern-formatter.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
 import { intentCache, type IntentKey, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
@@ -46,16 +46,8 @@ async function trySemanticRecall(options: SemanticRecallOptions): Promise<BasePa
 
     // Get/create index and fetch patterns from enabled sources
     const index = getSemanticIndex(config);
-    const enabledSources = sourceManager.getEnabledSources();
-    const sourceIds = enabledSources.map(s => s.id as FreeSourceName);
-    const sources = sourceIds.map(id => getSource(id));
-
-    const fetchResults = await Promise.allSettled(
-      sources.map(source => source.fetchPatterns())
-    );
-    const allPatterns = fetchResults
-      .filter((r): r is PromiseFulfilledResult<BasePattern[]> => r.status === 'fulfilled')
-      .flatMap(r => r.value);
+    const enabledSourceIds = sourceManager.getEnabledSources().map(s => s.id as FreeSourceName);
+    const allPatterns = await fetchAllPatterns(enabledSourceIds);
 
     await index.index(allPatterns);
 

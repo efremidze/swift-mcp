@@ -110,7 +110,7 @@ export async function searchMultipleSources(
 export async function prefetchAllSources(): Promise<PromiseSettledResult<BasePattern[]>[]> {
   const sources = getAllFreeSources();
   const sourceNames = Object.keys(SOURCE_CLASSES);
-  
+
   const results = await Promise.allSettled(
     sources.map(source => source.fetchPatterns())
   );
@@ -118,9 +118,9 @@ export async function prefetchAllSources(): Promise<PromiseSettledResult<BasePat
   // Log summary of results
   const successful = results.filter(r => r.status === 'fulfilled').length;
   const failed = results.filter(r => r.status === 'rejected').length;
-  
+
   console.log(`Prefetch complete: ${successful} succeeded, ${failed} failed`);
-  
+
   // Log failed sources for debugging
   results.forEach((result, index) => {
     if (result.status === 'rejected') {
@@ -129,4 +129,25 @@ export async function prefetchAllSources(): Promise<PromiseSettledResult<BasePat
   });
 
   return results;
+}
+
+/**
+ * Fetch all patterns from specified sources.
+ * Uses Promise.allSettled to collect partial results even if some sources fail.
+ * @param sourceIds - Optional array of source IDs to fetch from. Defaults to all sources.
+ */
+export async function fetchAllPatterns(
+  sourceIds?: FreeSourceName[]
+): Promise<BasePattern[]> {
+  const sources = sourceIds
+    ? sourceIds.map(id => getSource(id))
+    : getAllFreeSources();
+
+  const results = await Promise.allSettled(
+    sources.map(source => source.fetchPatterns())
+  );
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<BasePattern[]> => r.status === 'fulfilled')
+    .flatMap(r => r.value);
 }
