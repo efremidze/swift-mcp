@@ -1,5 +1,6 @@
 // src/sources/free/vanderlee.ts
 
+import { stripHtml as stripHtmlLib } from 'string-strip-html';
 import { RssPatternSource, type BasePattern } from './rssPatternSource.js';
 import { createSourceConfig } from '../../config/swift-keywords.js';
 
@@ -35,16 +36,12 @@ function extractPostContent(html: string): string {
 }
 
 function stripHtml(html: string): string {
-  // Keep code blocks intact for detection, remove other HTML
-  return html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-    // Keep pre/code tags for code detection
-    .replace(/<(?!pre|code|\/pre|\/code)[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Use string-strip-html library (more robust than regex)
+  // Keep pre/code tags for code detection in swift-analysis.ts
+  return stripHtmlLib(html, {
+    ignoreTags: ['pre', 'code'],
+    stripTogetherWithTheirContents: ['script', 'style', 'nav', 'footer'],
+  }).result;
 }
 
 export class VanderLeeSource extends RssPatternSource<VanderLeePattern> {
