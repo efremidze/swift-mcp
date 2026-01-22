@@ -30,12 +30,10 @@ function extractIndexableContent(pattern: BasePattern): string {
 
 /**
  * Generate content hash for cache key
+ * Uses extractIndexableContent to ensure hash matches embedding input
  */
 function getContentHash(pattern: BasePattern): string {
-  const title = pattern.title || '';
-  const excerpt = pattern.excerpt || pattern.content?.substring(0, 500) || '';
-  const content = `${title}${excerpt}`;
-
+  const content = extractIndexableContent(pattern);
   return createHash('sha256').update(content).digest('hex').substring(0, 16);
 }
 
