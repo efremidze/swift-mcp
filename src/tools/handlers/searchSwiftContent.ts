@@ -57,9 +57,13 @@ Usage: search_swift_content({ query: "async await" })`);
 
   let filtered: BasePattern[];
 
+  // Track whether this was a cache hit (to avoid re-caching)
+  let wasCacheHit = false;
+
   if (cached) {
-    // Cache hit - use cached patterns
+    // Cache hit - use cached patterns (includes any semantic results from prior search)
     filtered = (cached.patterns as BasePattern[]) || [];
+    wasCacheHit = true;
   } else {
     // Cache miss - fetch from sources
     const results = await searchMultipleSources(query);
@@ -68,17 +72,6 @@ Usage: search_swift_content({ query: "async await" })`);
     filtered = requireCode
       ? results.filter(r => r.hasCode)
       : results;
-
-    // Cache the results
-    if (filtered.length > 0) {
-      const cacheData: StorableCachedSearchResult = {
-        patternIds: filtered.map(p => p.id),
-        scores: Object.fromEntries(filtered.map(p => [p.id, p.relevanceScore])),
-        totalCount: filtered.length,
-        patterns: filtered,
-      };
-      await intentCache.set(intentKey, cacheData);
-    }
   }
 
   // Get semantic recall config
@@ -87,8 +80,9 @@ Usage: search_swift_content({ query: "async await" })`);
 
   let finalResults = filtered;
 
-  // Semantic recall fallback: only if enabled AND lexical results are weak
-  if (semanticConfig.enabled && filtered.length > 0) {
+  // Semantic recall fallback: only if enabled AND lexical results are weak AND not a cache hit
+  // (Cache hits already include semantic results from the original search)
+  if (!wasCacheHit && semanticConfig.enabled && filtered.length > 0) {
     // Calculate max lexical score
     const maxScore = Math.max(...filtered.map(p => p.relevanceScore));
 
@@ -119,6 +113,17 @@ Usage: search_swift_content({ query: "async await" })`);
         .filter(p => p.relevanceScore >= semanticConfig.minRelevanceScore)
         .sort((a, b) => b.relevanceScore - a.relevanceScore);
     }
+  }
+
+  // Cache final results (after semantic merge) if this was a cache miss
+  if (!wasCacheHit && finalResults.length > 0) {
+    const cacheData: StorableCachedSearchResult = {
+      patternIds: finalResults.map(p => p.id),
+      scores: Object.fromEntries(finalResults.map(p => [p.id, p.relevanceScore])),
+      totalCount: finalResults.length,
+      patterns: finalResults,
+    };
+    await intentCache.set(intentKey, cacheData);
   }
 
   if (finalResults.length === 0) {
