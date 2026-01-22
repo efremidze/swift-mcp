@@ -156,16 +156,49 @@ The configuration file is automatically created at `~/.swift-patterns-mcp/config
 ```json
 {
   "sources": {
-    "sundell": { "enabled": true, "quality": 60 },
-    "vanderlee": { "enabled": true, "quality": 60 },
-    "pointfree": { "enabled": false, "quality": 60 },
-    "patreon": { "enabled": false }
+    "sundell": { "enabled": true, "configured": true },
+    "vanderlee": { "enabled": true, "configured": true },
+    "nilcoalescing": { "enabled": true, "configured": true },
+    "pointfree": { "enabled": true, "configured": true },
+    "patreon": { "enabled": false, "configured": false }
   },
-  "cache": {
-    "ttl": 86400
+  "prefetchSources": true,
+  "semanticRecall": {
+    "enabled": false,
+    "minLexicalScore": 0.35,
+    "minRelevanceScore": 70
   }
 }
 ```
+
+### Semantic Recall (Optional AI Enhancement)
+
+Semantic recall provides AI-powered semantic search as a fallback when traditional keyword search returns poor results. It uses transformer embeddings to understand query intent and find conceptually similar patterns.
+
+**Features:**
+- 🧠 Automatically activates when keyword search scores are low
+- 🎯 Uses sentence transformers to understand meaning, not just keywords
+- 📊 Quality filtering to only index high-relevance patterns
+- ⚡ Efficient caching of embeddings
+
+**Configuration:**
+
+```json
+{
+  "semanticRecall": {
+    "enabled": false,              // Enable semantic recall
+    "minLexicalScore": 0.35,       // Activate when keyword search < 0.35
+    "minRelevanceScore": 70        // Only index patterns with score >= 70
+  }
+}
+```
+
+**When to Enable:**
+- Your queries use conceptual terms that don't match exact keywords
+- You want more intelligent, context-aware search results
+- You're okay with slightly slower first-time searches (embeddings need to compute)
+
+**Note:** Requires downloading a ~50MB transformer model on first use. Embeddings are cached for performance.
 
 ### Environment Variables (Optional)
 
@@ -346,7 +379,6 @@ swift-patterns-mcp setup
 ### Future (v2.x)
 - [ ] Additional premium sources
 - [ ] More free sources
-- [ ] Advanced search (with vector embeddings)
 - [ ] Code validation
 
 ## 🤝 Contributing
