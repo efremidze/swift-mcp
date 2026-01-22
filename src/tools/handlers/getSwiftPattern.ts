@@ -85,7 +85,7 @@ ${context.sourceManager.isSourceConfigured('patreon') ? '\n💡 Enable Patreon f
     includeSnippets: false,
     includeTechniques: false,
     includeComplexity: false,
-    excerptLength: 100,
+    excerptLength: 200,
   });
 
   return createTextResponse(formatted);

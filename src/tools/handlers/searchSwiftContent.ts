@@ -152,7 +152,7 @@ Usage: search_swift_content({ query: "async await" })`);
     includeSnippets: false,
     includeTechniques: false,
     includeComplexity: false,
-    excerptLength: 100,
+    excerptLength: 200,
   });
 
   return createTextResponse(formatted);
