@@ -1,7 +1,7 @@
 // src/tools/handlers/searchSwiftContent.ts
 
 import type { ToolHandler } from '../types.js';
-import { searchMultipleSources, getSourceNames, getSources } from '../../utils/source-registry.js';
+import { searchMultipleSources, getSourceNames, getSource, type FreeSourceName } from '../../utils/source-registry.js';
 import { formatSearchPatterns } from '../../utils/pattern-formatter.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
 import { intentCache, type IntentKey, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
@@ -20,10 +20,16 @@ function getSemanticIndex(config: SemanticRecallConfig): SemanticRecallIndex {
 }
 
 /**
- * Fetch all patterns from all sources for semantic indexing
+ * Fetch patterns from enabled sources for semantic indexing
  */
-async function getAllPatternsForSemanticIndex(): Promise<BasePattern[]> {
-  const sources = getSources('all');
+async function getAllPatternsForSemanticIndex(sourceManager: SourceManager): Promise<BasePattern[]> {
+  // Get only user-enabled sources
+  const enabledSources = sourceManager.getEnabledSources();
+  const sourceIds = enabledSources.map(s => s.id as FreeSourceName);
+
+  // Get source instances for enabled sources
+  const sources = sourceIds.map(id => getSource(id));
+
   const results = await Promise.allSettled(
     sources.map(source => source.fetchPatterns())
   );
@@ -97,8 +103,8 @@ Usage: search_swift_content({ query: "async await" })`);
       // Lexical results are absent or weak - try semantic recall
       const index = getSemanticIndex(semanticConfig);
 
-      // Index all high-quality patterns (this is cached, so cheap after first call)
-      const allPatterns = await getAllPatternsForSemanticIndex();
+      // Index all high-quality patterns from enabled sources (cached, so cheap after first call)
+      const allPatterns = await getAllPatternsForSemanticIndex(sourceManager);
       await index.index(allPatterns);
 
       // Search semantically
