@@ -19,6 +19,7 @@ interface CacheEntry<T> {
 export class FileCache {
   private cacheDir: string;
   private memoryCache: QuickLRU<string, CacheEntry<unknown>>;
+  private inFlightFetches: Map<string, Promise<unknown>> = new Map();
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(namespace: string = 'default', maxMemoryEntries: number = DEFAULT_MAX_MEMORY_ENTRIES) {
@@ -63,8 +64,12 @@ export class FileCache {
   async get<T>(key: string): Promise<T | null> {
     // Check memory cache first
     const memEntry = this.memoryCache.get(key) as CacheEntry<T> | undefined;
-    if (memEntry && !this.isExpired(memEntry)) {
-      return memEntry.data;
+    if (memEntry) {
+      if (!this.isExpired(memEntry)) {
+        return memEntry.data;
+      }
+      // Remove expired entry from memory cache
+      this.memoryCache.delete(key);
     }
 
     // Check file cache
@@ -108,6 +113,35 @@ export class FileCache {
     } catch {
       // Cache write failed, continue without caching
     }
+  }
+
+  async getOrFetch<T>(key: string, fetcher: () => Promise<T>, ttl: number = DEFAULT_TTL): Promise<T> {
+    // Check cache first
+    const cached = await this.get<T>(key);
+    if (cached !== null) {
+      return cached;
+    }
+
+    // Check if a fetch is already in progress for this key
+    const inFlight = this.inFlightFetches.get(key) as Promise<T> | undefined;
+    if (inFlight) {
+      return inFlight;
+    }
+
+    // Start a new fetch and track it
+    const fetchPromise = (async () => {
+      try {
+        const data = await fetcher();
+        await this.set(key, data, ttl);
+        return data;
+      } finally {
+        // Remove from in-flight map when complete (success or failure)
+        this.inFlightFetches.delete(key);
+      }
+    })();
+
+    this.inFlightFetches.set(key, fetchPromise);
+    return fetchPromise;
   }
 
   private isExpired(entry: CacheEntry<unknown>): boolean {
