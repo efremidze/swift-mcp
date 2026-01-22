@@ -3,7 +3,7 @@
 
 import MiniSearch from 'minisearch';
 import natural from 'natural';
-import { PRESERVE_TERMS, STOPWORDS } from './search-terms.js';
+import { normalizeTokens } from './search-terms.js';
 
 // Porter Stemmer for English
 const stemmer = natural.PorterStemmer;
@@ -27,40 +27,9 @@ export interface SearchOptions {
   minScore?: number;        // Minimum score threshold
 }
 
-// Custom tokenizer with smart hyphen handling
+// Custom tokenizer with smart hyphen handling and stemming
 function tokenize(text: string): string[] {
-  // 1. Clean text but keep hyphens temporarily
-  const rawTokens = text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, ' ') 
-    .split(/\s+/)
-    .filter(t => t.length > 0);
-
-  const finalTokens: string[] = [];
-
-  for (const token of rawTokens) {
-    // 2. Check if the full token is a preserved term (e.g., if you added "objective-c")
-    if (PRESERVE_TERMS.has(token)) {
-      finalTokens.push(token);
-      continue;
-    }
-
-    // 3. If not preserved, split on hyphens to separate words like "async-await" -> "async", "await"
-    const subTokens = token.split('-');
-
-    for (const sub of subTokens) {
-      if (sub.length <= 1 || STOPWORDS.has(sub)) continue;
-
-      // 4. Check sub-tokens against preserved terms or stem them
-      if (PRESERVE_TERMS.has(sub)) {
-        finalTokens.push(sub);
-      } else {
-        finalTokens.push(stemmer.stem(sub));
-      }
-    }
-  }
-
-  return finalTokens;
+  return normalizeTokens(text, (token) => stemmer.stem(token));
 }
 
 // Process query with same tokenization for consistent matching

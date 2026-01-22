@@ -3,7 +3,7 @@
 
 import { createHash } from 'crypto';
 import { FileCache } from './cache.js';
-import { PRESERVE_TERMS, STOPWORDS } from './search-terms.js';
+import { normalizeTokens } from './search-terms.js';
 
 // 12 hours in seconds (longer than RSS cache, shorter than article cache)
 const DEFAULT_INTENT_TTL = 43200;
@@ -74,33 +74,8 @@ export class IntentCache {
    * - Sort alphabetically (order-independent)
    */
   normalizeQuery(query: string): string {
-    const tokens = query
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, ' ')  // Keep hyphens for technical terms
-      .replace(/\s+/g, ' ')       // Collapse whitespace
-      .split(' ')
-      .filter(token => token.length > 1);
-
-    const processed: string[] = [];
-
-    for (const token of tokens) {
-      // Check if full token is preserved
-      if (PRESERVE_TERMS.has(token)) {
-        processed.push(token);
-        continue;
-      }
-
-      // Split hyphenated terms and process parts
-      const parts = token.split('-');
-      for (const part of parts) {
-        if (part.length <= 1) continue;
-        if (STOPWORDS.has(part)) continue;
-
-        // Keep preserved terms, include others
-        processed.push(part);
-      }
-    }
+    // Use shared normalization without stemming (cache keys shouldn't stem)
+    const processed = normalizeTokens(query);
 
     // Sort for order-independent matching
     return processed.sort().join(' ');

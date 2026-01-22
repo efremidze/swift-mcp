@@ -24,3 +24,56 @@ export const PRESERVE_TERMS = new Set([
   'cloudkit', 'urlsession', 'codable', 'observable', 'published',
   'stateobject', 'observedobject', 'environmentobject', 'binding', 'state'
 ]);
+
+/**
+ * Shared token normalization logic used by both search and intent caching.
+ * 
+ * - Lowercase
+ * - Strip non-word characters (keeping hyphens)
+ * - Split on whitespace
+ * - Split hyphenated terms
+ * - Filter stopwords while preserving Swift-specific terms
+ * 
+ * @param text - Text to normalize
+ * @param applyTransform - Optional transform function (e.g., stemmer) applied to non-preserved terms
+ * @returns Array of normalized tokens
+ */
+export function normalizeTokens(
+  text: string,
+  applyTransform?: (token: string) => string
+): string[] {
+  // 1. Clean text but keep hyphens temporarily
+  const rawTokens = text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, ' ') 
+    .split(/\s+/)
+    .filter(t => t.length > 0);
+
+  const finalTokens: string[] = [];
+
+  for (const token of rawTokens) {
+    // 2. Check if the full token is a preserved term (e.g., "objective-c")
+    if (PRESERVE_TERMS.has(token)) {
+      finalTokens.push(token);
+      continue;
+    }
+
+    // 3. If not preserved, split on hyphens to separate words like "async-await" -> "async", "await"
+    const subTokens = token.split('-');
+
+    for (const sub of subTokens) {
+      if (sub.length <= 1 || STOPWORDS.has(sub)) continue;
+
+      // 4. Check sub-tokens against preserved terms or apply transform
+      if (PRESERVE_TERMS.has(sub)) {
+        finalTokens.push(sub);
+      } else if (applyTransform) {
+        finalTokens.push(applyTransform(sub));
+      } else {
+        finalTokens.push(sub);
+      }
+    }
+  }
+
+  return finalTokens;
+}
