@@ -36,6 +36,24 @@ const DEFAULT_OPTIONS: Required<FormatOptions> = {
 };
 
 /**
+ * Common format options used by tool handlers
+ */
+export const COMMON_FORMAT_OPTIONS: FormatOptions = {
+  maxResults: 4,
+  includeSnippets: false,
+  includeTechniques: false,
+  includeComplexity: false,
+  excerptLength: 200,
+};
+
+/**
+ * Detect if the user wants to see code examples based on args or query content
+ */
+export function detectCodeIntent(args: any, query: string): boolean {
+  return Boolean(args?.includeCode) || /code|example|snippet/i.test(query);
+}
+
+/**
  * Format a single pattern as markdown
  */
 export function formatPattern(pattern: BasePattern, options: FormatOptions = {}): string {

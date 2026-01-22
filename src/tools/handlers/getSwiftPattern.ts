@@ -2,7 +2,7 @@
 
 import type { ToolHandler } from '../types.js';
 import { getSourceNames, searchMultipleSources, type FreeSourceName } from '../../utils/source-registry.js';
-import { formatTopicPatterns } from '../../utils/pattern-formatter.js';
+import { formatTopicPatterns, COMMON_FORMAT_OPTIONS, detectCodeIntent } from '../../utils/pattern-formatter.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
 import { intentCache, type IntentKey, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
@@ -23,7 +23,7 @@ Example topics:
 
   const source = (args?.source as string) || "all";
   const minQuality = (args?.minQuality as number) || 70;
-  const wantsCode = Boolean(args?.includeCode) || /code|example|snippet/i.test(topic);
+  const wantsCode = detectCodeIntent(args, topic);
 
   // Build intent key for caching
   const intentKey: IntentKey = {
@@ -78,14 +78,8 @@ ${context.sourceManager.isSourceConfigured('patreon') ? '\n💡 Enable Patreon f
 
   // Format using shared utility
   const formatted = formatTopicPatterns(results, topic, {
-    maxResults: 4,
-    includeQuality: false,
-    includeTopics: false,
+    ...COMMON_FORMAT_OPTIONS,
     includeCode: wantsCode,
-    includeSnippets: false,
-    includeTechniques: false,
-    includeComplexity: false,
-    excerptLength: 200,
   });
 
   return createTextResponse(formatted);

@@ -2,7 +2,7 @@
 
 import type { ToolHandler } from '../types.js';
 import { searchMultipleSources, getSourceNames, fetchAllPatterns, type FreeSourceName } from '../../utils/source-registry.js';
-import { formatSearchPatterns } from '../../utils/pattern-formatter.js';
+import { formatSearchPatterns, COMMON_FORMAT_OPTIONS, detectCodeIntent } from '../../utils/pattern-formatter.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
 import { intentCache, type IntentKey, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
@@ -69,7 +69,7 @@ async function trySemanticRecall(options: SemanticRecallOptions): Promise<BasePa
 export const searchSwiftContentHandler: ToolHandler = async (args) => {
   const query = args?.query as string;
   const requireCode = args?.requireCode as boolean;
-  const wantsCode = Boolean(args?.includeCode) || /code|example|snippet/i.test(query);
+  const wantsCode = detectCodeIntent(args, query);
 
   if (!query) {
     return createTextResponse(`Missing required argument: query
@@ -147,12 +147,8 @@ Usage: search_swift_content({ query: "async await" })`);
 
   // Format using shared utility
   const formatted = formatSearchPatterns(finalResults, query, {
-    maxResults: 4,
+    ...COMMON_FORMAT_OPTIONS,
     includeCode: wantsCode,
-    includeSnippets: false,
-    includeTechniques: false,
-    includeComplexity: false,
-    excerptLength: 200,
   });
 
   return createTextResponse(formatted);
