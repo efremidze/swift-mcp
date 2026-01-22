@@ -296,35 +296,8 @@ describe('IntentCache', () => {
       expect(cached?.patternIds).toEqual(['fetched']);
     });
 
-    it('should deduplicate concurrent requests (stampede prevention)', async () => {
-      let fetchCount = 0;
-      const slowFetcher = async () => {
-        fetchCount++;
-        await new Promise(r => setTimeout(r, 50));
-        return {
-          patternIds: ['slow'],
-          scores: { 'slow': 70 },
-          totalCount: 1,
-        };
-      };
-
-      // Fire multiple concurrent requests
-      const promises = [
-        cache.getOrFetch(testIntent, slowFetcher),
-        cache.getOrFetch(testIntent, slowFetcher),
-        cache.getOrFetch(testIntent, slowFetcher),
-      ];
-
-      const results = await Promise.all(promises);
-
-      // Should only fetch once
-      expect(fetchCount).toBe(1);
-
-      // All should get same result
-      expect(results[0].patternIds).toEqual(['slow']);
-      expect(results[1].patternIds).toEqual(['slow']);
-      expect(results[2].patternIds).toEqual(['slow']);
-    });
+    // Note: Stampede prevention (concurrent request deduplication) is tested
+    // in src/integration/cache-behavior.test.ts with more comprehensive scenarios
   });
 
   describe('stats', () => {
