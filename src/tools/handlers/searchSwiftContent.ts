@@ -19,23 +19,59 @@ function getSemanticIndex(config: SemanticRecallConfig): SemanticRecallIndex {
   return semanticIndex;
 }
 
+interface SemanticRecallOptions {
+  query: string;
+  lexicalResults: BasePattern[];
+  config: SemanticRecallConfig;
+  sourceManager: SourceManager;
+  requireCode: boolean;
+}
+
 /**
- * Fetch patterns from enabled sources for semantic indexing
+ * Attempt semantic recall to supplement lexical results.
+ * Returns additional patterns not in lexicalResults, or empty array on failure.
+ * Handles all errors internally - never throws.
  */
-async function getAllPatternsForSemanticIndex(sourceManager: SourceManager): Promise<BasePattern[]> {
-  // Get only user-enabled sources
-  const enabledSources = sourceManager.getEnabledSources();
-  const sourceIds = enabledSources.map(s => s.id as FreeSourceName);
+async function trySemanticRecall(options: SemanticRecallOptions): Promise<BasePattern[]> {
+  const { query, lexicalResults, config, sourceManager, requireCode } = options;
 
-  // Get source instances for enabled sources
-  const sources = sourceIds.map(id => getSource(id));
+  try {
+    // Check if semantic recall should activate
+    const maxScore = lexicalResults.length > 0
+      ? Math.max(...lexicalResults.map(p => p.relevanceScore)) / 100
+      : 0;
 
-  const results = await Promise.allSettled(
-    sources.map(source => source.fetchPatterns())
-  );
-  return results
-    .filter((r): r is PromiseFulfilledResult<BasePattern[]> => r.status === 'fulfilled')
-    .flatMap(r => r.value);
+    const shouldActivate = lexicalResults.length === 0 || maxScore < config.minLexicalScore;
+    if (!shouldActivate) return [];
+
+    // Get/create index and fetch patterns from enabled sources
+    const index = getSemanticIndex(config);
+    const enabledSources = sourceManager.getEnabledSources();
+    const sourceIds = enabledSources.map(s => s.id as FreeSourceName);
+    const sources = sourceIds.map(id => getSource(id));
+
+    const fetchResults = await Promise.allSettled(
+      sources.map(source => source.fetchPatterns())
+    );
+    const allPatterns = fetchResults
+      .filter((r): r is PromiseFulfilledResult<BasePattern[]> => r.status === 'fulfilled')
+      .flatMap(r => r.value);
+
+    await index.index(allPatterns);
+
+    // Search and filter
+    const semanticResults = await index.search(query, 5);
+    const existingIds = new Set(lexicalResults.map(p => p.id));
+
+    return semanticResults.filter(p =>
+      !existingIds.has(p.id) &&
+      (!requireCode || p.hasCode) &&
+      p.relevanceScore >= config.minRelevanceScore
+    );
+  } catch {
+    // Semantic recall is best-effort; return empty on any failure
+    return [];
+  }
 }
 
 export const searchSwiftContentHandler: ToolHandler = async (args) => {
@@ -80,57 +116,24 @@ Usage: search_swift_content({ query: "async await" })`);
       : results;
   }
 
-  // Get semantic recall config
+  // Semantic recall: supplement lexical results when enabled and not cached
   const sourceManager = new SourceManager();
   const semanticConfig = sourceManager.getSemanticRecallConfig();
 
   let finalResults = filtered;
 
-  // Semantic recall fallback: activates when enabled AND not a cache hit AND either:
-  // (1) No lexical results at all, OR
-  // (2) Lexical results are weak (max score below threshold)
-  // Cache hits already include semantic results from the original search
   if (!wasCacheHit && semanticConfig.enabled) {
-    // Determine if semantic recall should activate
-    const noLexicalResults = filtered.length === 0;
-    const maxScore = filtered.length > 0
-      ? Math.max(...filtered.map(p => p.relevanceScore))
-      : 0;
-    const normalizedMaxScore = maxScore / 100;
-    const weakLexicalResults = filtered.length > 0 && normalizedMaxScore < semanticConfig.minLexicalScore;
+    const semanticResults = await trySemanticRecall({
+      query,
+      lexicalResults: filtered,
+      config: semanticConfig,
+      sourceManager,
+      requireCode: requireCode || false,
+    });
 
-    if (noLexicalResults || weakLexicalResults) {
-      // Lexical results are absent or weak - try semantic recall
-      // Wrapped in try-catch: semantic recall is a fallback, failures shouldn't break the handler
-      try {
-        const index = getSemanticIndex(semanticConfig);
-
-        // Index all high-quality patterns from enabled sources (cached, so cheap after first call)
-        const allPatterns = await getAllPatternsForSemanticIndex(sourceManager);
-        await index.index(allPatterns);
-
-        // Search semantically
-        const semanticResultsRaw = await index.search(query, 5);
-        const semanticResults = requireCode
-          ? semanticResultsRaw.filter(p => p.hasCode)
-          : semanticResultsRaw;
-
-        // Merge conservatively: semantic results as supplement, not replacement
-        // Add semantic results not already in filtered
-        const existingIds = new Set(filtered.map(p => p.id));
-        const newSemanticResults = semanticResults.filter(p => !existingIds.has(p.id));
-
-        // Append semantic results after lexical results
-        finalResults = [...filtered, ...newSemanticResults];
-
-        // Re-apply relevance filter and re-sort
-        finalResults = finalResults
-          .filter(p => p.relevanceScore >= semanticConfig.minRelevanceScore)
-          .sort((a, b) => b.relevanceScore - a.relevanceScore);
-      } catch {
-        // Semantic recall failed - fall back to lexical results only
-        // finalResults already equals filtered, so no action needed
-      }
+    if (semanticResults.length > 0) {
+      finalResults = [...filtered, ...semanticResults]
+        .sort((a, b) => b.relevanceScore - a.relevanceScore);
     }
   }
 
