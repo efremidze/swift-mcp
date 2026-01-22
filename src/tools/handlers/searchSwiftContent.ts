@@ -69,6 +69,7 @@ async function trySemanticRecall(options: SemanticRecallOptions): Promise<BasePa
 export const searchSwiftContentHandler: ToolHandler = async (args) => {
   const query = args?.query as string;
   const requireCode = args?.requireCode as boolean;
+  const wantsCode = Boolean(args?.includeCode) || /code|example|snippet/i.test(query);
 
   if (!query) {
     return createTextResponse(`Missing required argument: query
@@ -146,9 +147,12 @@ Usage: search_swift_content({ query: "async await" })`);
 
   // Format using shared utility
   const formatted = formatSearchPatterns(finalResults, query, {
-    maxResults: 10,
-    includeCode: true,
-    excerptLength: 200,
+    maxResults: 4,
+    includeCode: wantsCode,
+    includeSnippets: false,
+    includeTechniques: false,
+    includeComplexity: false,
+    excerptLength: 100,
   });
 
   return createTextResponse(formatted);

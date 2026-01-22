@@ -22,7 +22,8 @@ Example topics:
   }
 
   const source = (args?.source as string) || "all";
-  const minQuality = (args?.minQuality as number) || 60;
+  const minQuality = (args?.minQuality as number) || 70;
+  const wantsCode = Boolean(args?.includeCode) || /code|example|snippet/i.test(topic);
 
   // Build intent key for caching
   const intentKey: IntentKey = {
@@ -77,11 +78,14 @@ ${context.sourceManager.isSourceConfigured('patreon') ? '\n💡 Enable Patreon f
 
   // Format using shared utility
   const formatted = formatTopicPatterns(results, topic, {
-    maxResults: 10,
-    includeQuality: true,
-    includeTopics: true,
-    includeCode: true,
-    excerptLength: 300,
+    maxResults: 4,
+    includeQuality: false,
+    includeTopics: false,
+    includeCode: wantsCode,
+    includeSnippets: false,
+    includeTechniques: false,
+    includeComplexity: false,
+    excerptLength: 100,
   });
 
   return createTextResponse(formatted);
