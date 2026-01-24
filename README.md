@@ -385,11 +385,6 @@ swift-patterns-mcp setup
 
 We welcome contributions! See our [contributing guidelines](CONTRIBUTING.md).
 
-## 📌 Design Notes
-
-Looking for inspiration and concrete improvement ideas? See the Context7 review in
-[docs/CONTEXT7_INSPIRATION.md](docs/CONTEXT7_INSPIRATION.md).
-
 ## 📄 License
 
 MIT License - Copyright (c) 2026 Lasha Efremidze
