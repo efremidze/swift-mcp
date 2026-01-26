@@ -2,12 +2,16 @@
 // Memvid integration for persistent semantic memory and caching
 
 import { create, use, type Memvid } from '@memvid/sdk';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { getSwiftMcpDir } from './paths.js';
 import logger from './logger.js';
 import type { BasePattern } from '../sources/free/rssPatternSource.js';
 
 const MEMORY_FILE = 'swift-patterns-memory.mv2';
+
+// Score scaling constant for converting memvid scores (0-1) to pattern scores (0-100)
+const SCORE_SCALE_FACTOR = 10;
 
 /**
  * Extended pattern with source and author for memvid storage
@@ -73,13 +77,13 @@ export class MemvidMemoryManager {
 
     try {
       // Ensure the directory exists
-      const dir = this.memoryPath.substring(0, this.memoryPath.lastIndexOf('/'));
-      if (!require('fs').existsSync(dir)) {
-        require('fs').mkdirSync(dir, { recursive: true });
+      const dir = dirname(this.memoryPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
       }
 
       // Try to open existing memory, or create if it doesn't exist
-      if (require('fs').existsSync(this.memoryPath)) {
+      if (existsSync(this.memoryPath)) {
         this.memory = await use('basic', this.memoryPath, { mode: 'open' });
       } else {
         const { create } = await import('@memvid/sdk');
@@ -200,6 +204,9 @@ export class MemvidMemoryManager {
 
       // Convert memvid hits back to BasePattern format
       // Note: We use snippet as content since full text isn't returned
+      // hasCode detection: check for common code indicators in snippet
+      const codePatterns = /```|`\w+`|func |class |struct |let |var |import /;
+      
       return results.hits.map(hit => ({
         id: hit.uri?.split('/').pop() || '',
         title: hit.title || '',
@@ -208,8 +215,10 @@ export class MemvidMemoryManager {
         excerpt: hit.snippet || '',
         content: hit.snippet || '', // Use snippet as content for search results
         topics: hit.tags || [],
-        hasCode: false, // Can't determine from snippet alone
-        relevanceScore: Math.round(hit.score * 10), // Scale memvid score to 0-100 range
+        // Heuristic: detect code in snippet for better hasCode accuracy
+        hasCode: codePatterns.test(hit.snippet || ''),
+        // Scale memvid score (0-1 range) to pattern relevanceScore (0-100 range)
+        relevanceScore: Math.round(hit.score * SCORE_SCALE_FACTOR),
       }));
     } catch (error) {
       logger.warn({ err: error, query }, 'Failed to search memvid memory');
