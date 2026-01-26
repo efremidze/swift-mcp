@@ -8,6 +8,8 @@ import { intentCache, type IntentKey, type StorableCachedSearchResult } from '..
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
 import { SemanticRecallIndex, type SemanticRecallConfig } from '../../utils/semantic-recall.js';
 import SourceManager from '../../config/sources.js';
+import { getMemvidMemory } from '../../utils/memvid-memory.js';
+import logger from '../../utils/logger.js';
 
 // Module-level singleton for semantic recall index
 let semanticIndex: SemanticRecallIndex | null = null;
@@ -127,6 +129,50 @@ Usage: search_swift_content({ query: "async await" })`);
     if (semanticResults.length > 0) {
       finalResults = [...filtered, ...semanticResults]
         .sort((a, b) => b.relevanceScore - a.relevanceScore);
+    }
+  }
+
+  // Memvid persistent memory: supplement with cross-session recall
+  const memvidConfig = sourceManager.getMemvidConfig();
+  
+  if (!wasCacheHit && memvidConfig.enabled) {
+    try {
+      const memvidMemory = getMemvidMemory();
+      
+      // Search memvid for relevant patterns from past sessions
+      const memvidResults = await memvidMemory.search(query, {
+        k: 5,
+        mode: memvidConfig.useEmbeddings ? 'sem' : 'auto',
+      });
+
+      // Filter out duplicates and add new results
+      if (memvidResults.length > 0) {
+        const existingIds = new Set(finalResults.map(p => p.id));
+        const newMemvidResults = memvidResults.filter(p => 
+          !existingIds.has(p.id) &&
+          (!requireCode || p.hasCode)
+        );
+
+        if (newMemvidResults.length > 0) {
+          logger.info({ count: newMemvidResults.length }, 'Added patterns from memvid persistent memory');
+          finalResults = [...finalResults, ...newMemvidResults]
+            .sort((a, b) => b.relevanceScore - a.relevanceScore);
+        }
+      }
+
+      // Auto-store current results in memvid for future recall
+      if (memvidConfig.autoStore && finalResults.length > 0) {
+        // Store asynchronously without blocking the response
+        memvidMemory.storePatterns(finalResults, {
+          enableEmbedding: memvidConfig.useEmbeddings,
+          embeddingModel: memvidConfig.embeddingModel,
+        }).catch(err => {
+          logger.warn({ err }, 'Failed to auto-store patterns in memvid');
+        });
+      }
+    } catch (error) {
+      // Memvid errors shouldn't break the search
+      logger.warn({ err: error }, 'Memvid memory operation failed');
     }
   }
 

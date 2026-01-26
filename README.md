@@ -169,9 +169,50 @@ The configuration file is automatically created at `~/.swift-patterns-mcp/config
     "enabled": false,
     "minLexicalScore": 0.35,
     "minRelevanceScore": 70
+  },
+  "memvid": {
+    "enabled": true,
+    "autoStore": true,
+    "useEmbeddings": false,
+    "embeddingModel": "bge-small"
   }
 }
 ```
+
+### Persistent Memory with Memvid (Enhanced Recall)
+
+Memvid provides persistent semantic memory that improves recall across sessions and evolving sources. Unlike in-memory caching, memvid stores patterns in a single-file database that persists between server restarts.
+
+**Features:**
+- 💾 **Persistent Storage**: Patterns are stored in `~/.swift-patterns-mcp/swift-patterns-memory.mv2`
+- 🔍 **Cross-Session Recall**: Find patterns from previous searches even after server restart
+- 🧠 **Semantic Search**: Optional embedding-based similarity search
+- 🚀 **Automatic Storage**: Patterns are automatically stored during searches
+- ⚡ **Fast Retrieval**: Built-in BM25 + optional vector search
+
+**Configuration:**
+
+```json
+{
+  "memvid": {
+    "enabled": true,              // Enable memvid persistent memory
+    "autoStore": true,            // Automatically store patterns during searches
+    "useEmbeddings": false,       // Use semantic embeddings (requires model download)
+    "embeddingModel": "bge-small" // Embedding model: "bge-small", "openai-small"
+  }
+}
+```
+
+**When to Enable:**
+- You want patterns to persist across server restarts
+- You frequently search for similar topics
+- You want improved recall for evolving source content
+- You need cross-session semantic memory
+
+**Note:** Memvid complements MiniSearch (for fast in-session search) and semantic recall (for in-session fallback). All three work together:
+1. MiniSearch handles fast lexical search within current session
+2. Semantic recall activates for poor lexical results (in-session)
+3. Memvid provides cross-session persistent memory and recall
 
 ### Semantic Recall (Optional AI Enhancement)
 
