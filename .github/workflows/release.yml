@@ -45,6 +45,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Commit build artifacts
+        run: |
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "chore: prepare for release"
+
       - name: Bump version
         run: |
           npm version "${{ inputs.bump }}" -m "chore(release): %s"
