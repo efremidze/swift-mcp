@@ -6,6 +6,9 @@ import { formatTopicPatterns, COMMON_FORMAT_OPTIONS, detectCodeIntent } from '..
 import { createTextResponse } from '../../utils/response-helpers.js';
 import { intentCache, type IntentKey, type StorableCachedSearchResult } from '../../utils/intent-cache.js';
 import type { BasePattern } from '../../sources/free/rssPatternSource.js';
+import { getMemvidMemory } from '../../utils/memvid-memory.js';
+import SourceManager from '../../config/sources.js';
+import logger from '../../utils/logger.js';
 
 export const getSwiftPatternHandler: ToolHandler = async (args, context) => {
   const topic = args?.topic as string;
@@ -37,10 +40,12 @@ Example topics:
   const cached = await intentCache.get(intentKey);
 
   let results: BasePattern[];
+  let wasCacheHit = false;
 
   if (cached) {
     // Cache hit - use cached patterns
     results = (cached.patterns as BasePattern[]) || [];
+    wasCacheHit = true;
   } else {
     // Cache miss - fetch from sources using centralized search
     const allResults = await searchMultipleSources(topic, source as FreeSourceName | 'all');
@@ -61,6 +66,28 @@ Example topics:
         patterns: results,
       };
       await intentCache.set(intentKey, cacheData);
+    }
+  }
+
+  // Memvid persistent memory integration (when not from cache)
+  if (!wasCacheHit) {
+    const sourceManager = new SourceManager();
+    const memvidConfig = sourceManager.getMemvidConfig();
+
+    if (memvidConfig.enabled && memvidConfig.autoStore && results.length > 0) {
+      try {
+        const memvidMemory = getMemvidMemory();
+        
+        // Store patterns asynchronously for future cross-session recall
+        memvidMemory.storePatterns(results, {
+          enableEmbedding: memvidConfig.useEmbeddings,
+          embeddingModel: memvidConfig.embeddingModel,
+        }).catch(err => {
+          logger.warn({ err }, 'Failed to store patterns in memvid');
+        });
+      } catch (error) {
+        logger.warn({ err: error }, 'Memvid memory operation failed');
+      }
     }
   }
 

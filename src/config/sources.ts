@@ -94,6 +94,12 @@ export interface SourceConfig {
     minLexicalScore: number;  // MiniSearch score threshold below which semantic recall activates
     minRelevanceScore: number; // Minimum pattern relevanceScore to index (quality filter)
   };
+  memvid?: {
+    enabled: boolean;
+    autoStore: boolean; // Automatically store patterns in memvid during searches
+    useEmbeddings: boolean; // Use semantic embeddings for memvid storage
+    embeddingModel?: string; // Model to use for embeddings (e.g., 'bge-small', 'openai-small')
+  };
 }
 
 const sourceConfigSchema = z.object({
@@ -107,6 +113,12 @@ const sourceConfigSchema = z.object({
     enabled: z.boolean(),
     minLexicalScore: z.number(),
     minRelevanceScore: z.number(),
+  }).optional(),
+  memvid: z.object({
+    enabled: z.boolean(),
+    autoStore: z.boolean(),
+    useEmbeddings: z.boolean(),
+    embeddingModel: z.string().optional(),
   }).optional(),
 });
 
@@ -123,6 +135,12 @@ const DEFAULT_CONFIG: SourceConfig = {
     enabled: false,
     minLexicalScore: 0.35,
     minRelevanceScore: 70,
+  },
+  memvid: {
+    enabled: true,
+    autoStore: true,
+    useEmbeddings: false,
+    embeddingModel: 'bge-small',
   },
 };
 
@@ -290,6 +308,20 @@ export class SourceManager {
    */
   isSemanticRecallEnabled(): boolean {
     return this.config.semanticRecall?.enabled ?? false;
+  }
+
+  /**
+   * Get memvid configuration
+   */
+  getMemvidConfig() {
+    return this.config.memvid || DEFAULT_CONFIG.memvid!;
+  }
+
+  /**
+   * Check if memvid is enabled
+   */
+  isMemvidEnabled(): boolean {
+    return this.config.memvid?.enabled ?? true;
   }
 }
 
