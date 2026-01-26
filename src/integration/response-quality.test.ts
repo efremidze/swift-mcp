@@ -9,10 +9,13 @@ const describeIntegration = isCI ? describe.skip : describe;
 
 describeIntegration('Response Quality Validation', () => {
   let client: MCPTestClient;
+  let listSourcesResponse: string;
 
   beforeAll(async () => {
     client = new MCPTestClient();
     await client.start();
+    // Cache expensive list_content_sources call
+    listSourcesResponse = await client.callToolText('list_content_sources');
   }, 10000);
 
   afterAll(async () => {
@@ -20,36 +23,28 @@ describeIntegration('Response Quality Validation', () => {
   });
 
   describe('list_content_sources response format', () => {
-    it('should have clear markdown structure', async () => {
-      const response = await client.callToolText('list_content_sources');
-
-      expect(response).toMatch(/^# /m);
-      expect(response).toMatch(/## /m);
-      expect(response).toContain('Free Sources');
-      expect(response).toContain('Premium Sources');
+    it('should have clear markdown structure', () => {
+      expect(listSourcesResponse).toMatch(/^# /m);
+      expect(listSourcesResponse).toMatch(/## /m);
+      expect(listSourcesResponse).toContain('Free Sources');
+      expect(listSourcesResponse).toContain('Premium Sources');
     });
 
-    it('should list all expected free sources', async () => {
-      const response = await client.callToolText('list_content_sources');
-
+    it('should list all expected free sources', () => {
       // Verify all free sources are listed
-      expect(response).toContain('Swift by Sundell');
-      expect(response).toContain('Antoine van der Lee');
-      expect(response).toContain('Nil Coalescing');
-      expect(response).toContain('Point-Free');
+      expect(listSourcesResponse).toContain('Swift by Sundell');
+      expect(listSourcesResponse).toContain('Antoine van der Lee');
+      expect(listSourcesResponse).toContain('Nil Coalescing');
+      expect(listSourcesResponse).toContain('Point-Free');
     });
 
-    it('should show status indicators for each source', async () => {
-      const response = await client.callToolText('list_content_sources');
-
+    it('should show status indicators for each source', () => {
       // Each source should have a status indicator
-      expect(response).toMatch(/✅|⚙️|⬜/);
+      expect(listSourcesResponse).toMatch(/✅|⚙️|⬜/);
     });
 
-    it('should include actionable setup instructions', async () => {
-      const response = await client.callToolText('list_content_sources');
-
-      expect(response).toContain('swift-patterns-mcp setup');
+    it('should include actionable setup instructions', () => {
+      expect(listSourcesResponse).toContain('swift-patterns-mcp setup');
     });
   });
 
@@ -152,7 +147,7 @@ describeIntegration('Response Quality Validation', () => {
   });
 
   describe('search_swift_content response validation', () => {
-    it('should return results containing search terms', async () => {
+    it('should return relevant results with excerpts and proper formatting', async () => {
       const response = await client.callToolText('search_swift_content', {
         query: 'async await',
       });
@@ -167,6 +162,9 @@ describeIntegration('Response Quality Validation', () => {
         lowerResponse.includes('concurrency');
 
       expect(hasRelevantContent).toBe(true);
+      
+      // Results should have some content beyond just titles (excerpts)
+      expect(response.length).toBeGreaterThan(200);
     }, 60000);
 
     it('should filter by requireCode when specified', async () => {
@@ -178,15 +176,6 @@ describeIntegration('Response Quality Validation', () => {
       // When requireCode is true, results should have code indicators
       // This is hard to verify without parsing, but at minimum we should get results
       expect(withCodeResponse.length).toBeGreaterThan(50);
-    }, 60000);
-
-    it('should include excerpts in search results', async () => {
-      const response = await client.callToolText('search_swift_content', {
-        query: 'concurrency',
-      });
-
-      // Results should have some content beyond just titles
-      expect(response.length).toBeGreaterThan(200);
     }, 60000);
   });
 
