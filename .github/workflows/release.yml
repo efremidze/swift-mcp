@@ -48,7 +48,9 @@ jobs:
       - name: Commit build artifacts
         run: |
           git add -A
-          git diff-index --quiet HEAD || git commit -m "chore: prepare for release"
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: prepare for release"
+          fi
 
       - name: Bump version
         run: |
