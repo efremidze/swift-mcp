@@ -45,12 +45,12 @@ describe('MemvidMemoryManager', () => {
   };
 
   it('should initialize successfully', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     await expect(manager.initialize()).resolves.not.toThrow();
   });
 
   it('should store a single pattern', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     await manager.initialize();
 
     await expect(
@@ -62,7 +62,7 @@ describe('MemvidMemoryManager', () => {
   });
 
   it('should store multiple patterns in bulk', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     await manager.initialize();
 
     const patterns: BasePattern[] = [
@@ -85,7 +85,7 @@ describe('MemvidMemoryManager', () => {
   });
 
   it('should search stored patterns', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     await manager.initialize();
 
     // Store patterns first
@@ -111,7 +111,7 @@ describe('MemvidMemoryManager', () => {
   });
 
   it('should handle search with no results gracefully', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     await manager.initialize();
 
     const results = await manager.search('nonexistent-topic-xyz', { k: 5 });
@@ -121,7 +121,7 @@ describe('MemvidMemoryManager', () => {
   });
 
   it('should get memory statistics', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     await manager.initialize();
 
     const stats = await manager.getStats();
@@ -133,14 +133,14 @@ describe('MemvidMemoryManager', () => {
   });
 
   it('should close memory successfully', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     await manager.initialize();
 
     await expect(manager.close()).resolves.not.toThrow();
   });
 
   it('should handle errors gracefully when storing fails', async () => {
-    manager = new MemvidMemoryManager();
+    manager = new MemvidMemoryManager(testMemoryPath);
     // Don't initialize - should handle gracefully
     
     // This should not throw but log a warning

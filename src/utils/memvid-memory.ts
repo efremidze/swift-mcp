@@ -63,8 +63,8 @@ export class MemvidMemoryManager {
   private memory: Memvid | null = null;
   private initialized = false;
 
-  constructor() {
-    this.memoryPath = join(getSwiftMcpDir(), MEMORY_FILE);
+  constructor(customPath?: string) {
+    this.memoryPath = customPath || join(getSwiftMcpDir(), MEMORY_FILE);
   }
 
   /**
