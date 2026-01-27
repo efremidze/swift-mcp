@@ -345,26 +345,6 @@ For premium features, add to your MCP client config:
 "How do I build a photo editor app?"
 ```
 
-## 📚 Content Sources
-
-### Free Sources
-
-Currently supported, no authentication needed:
-
-| Source | Creator | Content Type | Update Frequency |
-|--------|---------|--------------|------------------|
-| **Swift by Sundell** | John Sundell | Articles, patterns, best practices | Weekly |
-| **Antoine van der Lee** | Antoine van der Lee | Tutorials, tips, deep dives | Weekly |
-| **Nil Coalescing** | Nil Coalescing | SwiftUI patterns, Swift tips | Weekly |
-| **Point-Free** | Point-Free | Open source libraries, patterns | On release |
-
-### Premium Sources
-
-Requires authentication and active subscriptions:
-
-| Source | What You Get | Setup Method | Status |
-|--------|--------------|--------------|--------|
-| **Patreon** | Premium content from iOS creators | OAuth 2.0 | ✅ Available |
 
 ## 🔐 Premium Integration (Optional)
 
