@@ -200,7 +200,7 @@ Configuration is automatically created at `~/.swift-patterns-mcp/config.json`:
 }
 ```
 
-### Persistent Memory with Memvid (Enhanced Recall)
+### Persistent Memory with Memvid
 
 Memvid provides persistent semantic memory that improves recall across sessions. Unlike in-memory caching, Memvid stores patterns in a single-file database that persists between server restarts.
 
