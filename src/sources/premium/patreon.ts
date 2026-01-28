@@ -171,14 +171,16 @@ export class PatreonSource {
     const creatorsToFetch = creatorId
       ? CREATORS.filter(c => c.patreonCampaignId === creatorId)
       : withYouTube();
-
+    if (creatorId && creatorsToFetch.length === 0) {
+      return [];
+    }
     // 1. Scan locally downloaded content (from patreon-dl)
     const downloadedPosts = scanDownloadedContent();
 
     for (const post of downloadedPosts) {
       // Filter by creator if specified
       const matchingCreator = creatorsToFetch.find(c => c.name === post.creator);
-      if (creatorsToFetch.length > 0 && !matchingCreator) continue;
+      if (creatorId && !matchingCreator) continue;
 
       patterns.push(...this.downloadedPostToPatterns(post));
     }
