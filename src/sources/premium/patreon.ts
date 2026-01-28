@@ -2,12 +2,13 @@
 
 import { loadTokens, getValidAccessToken } from './patreon-oauth.js';
 import { getChannelVideos, searchVideos, Video } from './youtube.js';
-import { scanDownloadedContent, DownloadedPost } from './patreon-dl.js';
+import { scanDownloadedContent, downloadPost, DownloadedPost, DownloadedFile } from './patreon-dl.js';
 import { CREATORS, withYouTube } from '../../config/creators.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
 import { createSourceConfig } from '../../config/swift-keywords.js';
 import { logError } from '../../utils/errors.js';
 import { fetch } from '../../utils/fetch.js';
+import logger from '../../utils/logger.js';
 
 const PATREON_API = 'https://www.patreon.com/api/oauth2/v2';
 
@@ -276,6 +277,79 @@ export class PatreonSource {
       } catch (error) {
         logError('Patreon', error, { creator: creator.name, query });
       }
+    }
+
+    // Fetch actual content for patterns with Patreon links
+    const enrichedPatterns = await this.enrichPatternsWithContent(patterns);
+    return enrichedPatterns;
+  }
+
+  /**
+   * Fetch actual code content from Patreon for patterns that have Patreon links
+   */
+  private async enrichPatternsWithContent(patterns: PatreonPattern[]): Promise<PatreonPattern[]> {
+    const enriched: PatreonPattern[] = [];
+
+    for (const pattern of patterns) {
+      // Only fetch content for Patreon URLs
+      if (!pattern.url.includes('patreon.com/posts/')) {
+        enriched.push(pattern);
+        continue;
+      }
+
+      try {
+        logger.info({ url: pattern.url }, 'Fetching Patreon post content');
+        const result = await downloadPost(pattern.url, pattern.creator);
+
+        if (result.success && result.files && result.files.length > 0) {
+          // Create patterns from downloaded files
+          const filePatterns = this.filesToPatterns(result.files, pattern);
+          enriched.push(...filePatterns);
+        } else {
+          // Keep original pattern if download failed or no files
+          enriched.push(pattern);
+        }
+      } catch (error) {
+        logError('Patreon', error, { url: pattern.url });
+        enriched.push(pattern);
+      }
+    }
+
+    return enriched;
+  }
+
+  /**
+   * Convert downloaded files to patterns
+   */
+  private filesToPatterns(files: DownloadedFile[], sourcePattern: PatreonPattern): PatreonPattern[] {
+    const patterns: PatreonPattern[] = [];
+
+    for (const file of files) {
+      if (file.type === 'other') continue;
+
+      const content = file.content || '';
+      const text = `${file.filename} ${content}`;
+      const topics = detectTopics(text, patreonTopicKeywords);
+      const hasCode = file.type === 'swift' || hasCodeContent(content);
+      const relevanceScore = calculateRelevance(text, hasCode, patreonQualitySignals, PATREON_BASE_SCORE, PATREON_CODE_BONUS);
+
+      patterns.push({
+        id: `${sourcePattern.id}-${file.filename}`,
+        title: `${sourcePattern.title} - ${file.filename}`,
+        url: `file://${file.filepath}`,
+        publishDate: sourcePattern.publishDate,
+        excerpt: content.substring(0, 500),
+        content,
+        creator: sourcePattern.creator,
+        topics,
+        relevanceScore,
+        hasCode: true,
+      });
+    }
+
+    // If no code files found, return original pattern
+    if (patterns.length === 0) {
+      return [sourcePattern];
     }
 
     return patterns;
