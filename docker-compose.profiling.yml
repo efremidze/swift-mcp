@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  pyroscope:
+    image: pyroscope/pyroscope:latest
+    ports:
+      - "4040:4040"
+    command: server
+    environment:
+      - PYROSCOPE_LOG_LEVEL=info
+    volumes:
+      - pyroscope-data:/var/lib/pyroscope
+    restart: unless-stopped
+
+volumes:
+  pyroscope-data:

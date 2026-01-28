@@ -3,6 +3,10 @@
 // src/index.ts
 
 import 'dotenv/config';
+import { initProfiler, stopProfiler } from './utils/profiler.js';
+
+// Initialize profiler if enabled
+initProfiler();
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -196,6 +200,19 @@ async function main() {
       logger.warn({ err: error }, "Failed to prefetch sources");
     });
   }
+
+  // Graceful shutdown handlers
+  process.on('SIGINT', () => {
+    logger.info('Received SIGINT, shutting down gracefully...');
+    stopProfiler();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    logger.info('Received SIGTERM, shutting down gracefully...');
+    stopProfiler();
+    process.exit(0);
+  });
 }
 
 main().catch((error) => {
