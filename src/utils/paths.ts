@@ -39,10 +39,3 @@ export function getPatreonContentDir(): string {
   return path.join(getSwiftMcpDir(), 'patreon-content');
 }
 
-/**
- * Get the Patreon creators configuration path
- * @returns The absolute path to the patreon-creators.json file
- */
-export function getPatreonCreatorsPath(): string {
-  return path.join(getSwiftMcpDir(), 'patreon-creators.json');
-}

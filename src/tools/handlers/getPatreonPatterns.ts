@@ -3,11 +3,23 @@
 import type { ToolHandler, PatreonPattern } from '../types.js';
 import { createTextResponse } from '../../utils/response-helpers.js';
 
-export const getPatreonPatternsHandler: ToolHandler = async (args, context) => {
-  if (!context.sourceManager.isSourceConfigured('patreon')) {
-    return createTextResponse(`Patreon not configured.
+function getMissingEnvVars(): string[] {
+  const required = ['YOUTUBE_API_KEY', 'PATREON_CLIENT_ID', 'PATREON_CLIENT_SECRET'];
+  return required.filter(key => !process.env[key]);
+}
 
-Set it up with: swift-patterns-mcp setup --patreon`);
+export const getPatreonPatternsHandler: ToolHandler = async (args, context) => {
+  // Check for missing environment variables and give specific feedback
+  const missingVars = getMissingEnvVars();
+  if (missingVars.length > 0) {
+    return createTextResponse(`Patreon integration missing required environment variables:
+
+${missingVars.map(v => `  - ${v}`).join('\n')}
+
+Add these to your .env file or environment:
+${missingVars.map(v => `  export ${v}="your_${v.toLowerCase()}"`).join('\n')}
+
+For setup instructions: https://github.com/efremidze/swift-patterns-mcp#patreon-setup`);
   }
 
   if (!context.patreonSource) {
