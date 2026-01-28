@@ -3,14 +3,11 @@
 import { loadTokens, getValidAccessToken } from './patreon-oauth.js';
 import { getChannelVideos, searchVideos, Video } from './youtube.js';
 import { scanDownloadedContent, DownloadedPost } from './patreon-dl.js';
-import { getByPatreonId } from '../../config/creators.js';
-import { getPatreonCreatorsPath } from '../../utils/paths.js';
+import { CREATORS, withYouTube } from '../../config/creators.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
 import { createSourceConfig } from '../../config/swift-keywords.js';
 import { logError } from '../../utils/errors.js';
 import { fetch } from '../../utils/fetch.js';
-import fs from 'fs';
-import path from 'path';
 
 const PATREON_API = 'https://www.patreon.com/api/oauth2/v2';
 
@@ -82,31 +79,10 @@ function isSwiftRelated(name: string, summary?: string): boolean {
 export class PatreonSource {
   private clientId: string;
   private clientSecret: string;
-  private enabledCreators: string[] = [];
 
   constructor() {
     this.clientId = process.env.PATREON_CLIENT_ID || '';
     this.clientSecret = process.env.PATREON_CLIENT_SECRET || '';
-    this.loadEnabledCreators();
-  }
-
-  private loadEnabledCreators(): void {
-    try {
-      const configPath = getPatreonCreatorsPath();
-      if (fs.existsSync(configPath)) {
-        const data = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-        this.enabledCreators = data.enabledCreators || [];
-      }
-    } catch {
-      this.enabledCreators = [];
-    }
-  }
-
-  saveEnabledCreators(creatorIds: string[]): void {
-    this.enabledCreators = creatorIds;
-    const configPath = getPatreonCreatorsPath();
-    fs.mkdirSync(path.dirname(configPath), { recursive: true });
-    fs.writeFileSync(configPath, JSON.stringify({ enabledCreators: creatorIds }, null, 2));
   }
 
   async isConfigured(): Promise<boolean> {
@@ -189,31 +165,26 @@ export class PatreonSource {
 
   async fetchPatterns(creatorId?: string): Promise<PatreonPattern[]> {
     const patterns: PatreonPattern[] = [];
+
+    // Use all known creators with YouTube channels, or filter by specific creator
     const creatorsToFetch = creatorId
-      ? [creatorId]
-      : this.enabledCreators;
+      ? CREATORS.filter(c => c.patreonCampaignId === creatorId)
+      : withYouTube();
 
     // 1. Scan locally downloaded content (from patreon-dl)
     const downloadedPosts = scanDownloadedContent();
 
     for (const post of downloadedPosts) {
       // Filter by creator if specified
-      const creator = creatorsToFetch.length > 0
-        ? getByPatreonId(creatorsToFetch.find(id => {
-            const c = getByPatreonId(id);
-            return c?.name === post.creator;
-          }) || '')
-        : null;
-
-      if (creatorsToFetch.length > 0 && !creator) continue;
+      const matchingCreator = creatorsToFetch.find(c => c.name === post.creator);
+      if (creatorsToFetch.length > 0 && !matchingCreator) continue;
 
       patterns.push(...this.downloadedPostToPatterns(post));
     }
 
     // 2. Fetch YouTube videos for additional metadata
-    for (const patreonId of creatorsToFetch) {
-      const creator = getByPatreonId(patreonId);
-      if (!creator?.youtubeChannelId) continue;
+    for (const creator of creatorsToFetch) {
+      if (!creator.youtubeChannelId) continue;
 
       try {
         const videos = await getChannelVideos(creator.youtubeChannelId, 50);
@@ -295,13 +266,10 @@ export class PatreonSource {
   async searchPatterns(query: string): Promise<PatreonPattern[]> {
     const patterns: PatreonPattern[] = [];
 
-    // Search YouTube for each enabled creator
-    for (const patreonId of this.enabledCreators) {
-      const creator = getByPatreonId(patreonId);
-      if (!creator?.youtubeChannelId) continue;
-
+    // Search YouTube for all known creators with YouTube channels
+    for (const creator of withYouTube()) {
       try {
-        const videos = await searchVideos(query, creator.youtubeChannelId, 25);
+        const videos = await searchVideos(query, creator.youtubeChannelId!, 25);
         for (const video of videos) {
           patterns.push(this.videoToPattern(video, creator.name));
         }
