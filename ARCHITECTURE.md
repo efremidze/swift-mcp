@@ -107,12 +107,12 @@ A centralized registry pattern for managing tool handlers.
 
 Individual handlers for each MCP tool:
 
-1. **`getSwiftPattern`** - Search free sources by topic
-2. **`searchSwiftContent`** - Search all enabled sources with code filtering
-3. **`listContentSources`** - List available sources and their status
-4. **`enableSource`** - Enable/disable content sources
-5. **`setupPatreon`** - Configure Patreon integration
-6. **`getPatreonPatterns`** - Search premium Patreon content
+1. **`get_swift_pattern`** - Search free sources by topic
+2. **`search_swift_content`** - Search all enabled sources with code filtering
+3. **`list_content_sources`** - List available sources and their status
+4. **`enable_source`** - Enable/disable content sources
+5. **`setup_patreon`** - Configure Patreon integration
+6. **`get_patreon_patterns`** - Search premium Patreon content
 
 Each handler follows a consistent pattern:
 - Validate input arguments
@@ -183,14 +183,14 @@ Template method pattern for RSS-based sources:
 ```typescript
 abstract class RssPatternSource<T extends BasePattern> {
   // Template methods (implemented by base)
-  - fetchPatterns(): Promise<T[]>
-  - searchPatterns(query: string): Promise<T[]>
-  - processRssItem(item): Promise<T>
-  - processArticle(item): Promise<T>
+  async fetchPatterns(): Promise<T[]>
+  async searchPatterns(query: string): Promise<T[]>
+  protected async processRssItem(item: Parser.Item): Promise<T>
+  protected async processArticle(item: Parser.Item): Promise<T>
   
   // Hook methods (implemented by subclasses)
-  - makePattern(obj): T
-  - extractContentFn(html): string
+  protected makePattern(obj: BasePattern): T
+  protected extractContentFn?(html: string): string
 }
 ```
 
@@ -304,7 +304,7 @@ Analyzes content for Swift relevance and quality.
 4. **`extractCodeBlocks(content)`** - Extract code snippets
 
 **Scoring Formula:**
-```typescript
+```
 relevance = baseScore 
           + (codeBonus if hasCode)
           + (qualitySignals matched)
@@ -324,7 +324,7 @@ Formats search results for AI consumption.
 - Customizable formatting options
 
 **Output Structure:**
-```
+```markdown
 📚 Found N results for "query":
 
 ## Title (Quality: 85/100) 🎯
@@ -334,9 +334,7 @@ Formats search results for AI consumption.
 
 Excerpt...
 
-```swift
-// Code example if available
-```
+(Swift code blocks included when available)
 ```
 
 ### 7. HTTP & Caching
@@ -623,7 +621,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Handler as Search Handler
+    participant Handler as Tool Handler
     participant Memvid as Memvid Memory
     participant DB as Memvid Database
     participant Config as Config Manager
@@ -704,26 +702,9 @@ export function getHandler(name: string): ToolHandler | undefined {
 }
 ```
 
-### 3. **Singleton Pattern**
+### 3. **Singleton + Factory Pattern**
 
-Source instances and indexes are cached as singletons:
-
-```typescript
-const sourceInstanceCache = new Map<FreeSourceName, FreeSource>();
-
-export function getSource(name: FreeSourceName): FreeSource {
-  const cached = sourceInstanceCache.get(name);
-  if (cached) return cached;
-  
-  const instance = new SourceClass();
-  sourceInstanceCache.set(name, instance);
-  return instance;
-}
-```
-
-### 4. **Factory Pattern**
-
-Source registry acts as a factory for source instances:
+Source registry combines both patterns - acting as a factory while caching instances as singletons:
 
 ```typescript
 const SOURCE_CLASSES = {
@@ -732,13 +713,22 @@ const SOURCE_CLASSES = {
   // ...
 };
 
+const sourceInstanceCache = new Map<FreeSourceName, FreeSource>();
+
 export function getSource(name: FreeSourceName): FreeSource {
+  // Singleton: Check cache first
+  const cached = sourceInstanceCache.get(name);
+  if (cached) return cached;
+  
+  // Factory: Create new instance from registry
   const SourceClass = SOURCE_CLASSES[name];
-  return new SourceClass();
+  const instance = new SourceClass();
+  sourceInstanceCache.set(name, instance);
+  return instance;
 }
 ```
 
-### 5. **Facade Pattern**
+### 4. **Facade Pattern**
 
 `source-registry.ts` provides a simplified interface to multiple sources:
 
@@ -752,7 +742,7 @@ export async function searchMultipleSources(query: string): Promise<Pattern[]> {
 }
 ```
 
-### 6. **Strategy Pattern**
+### 5. **Strategy Pattern**
 
 Different search strategies (lexical, semantic, memvid):
 
@@ -769,7 +759,7 @@ if (maxScore < threshold) {
 const memvidResults = await memvid.search(query);
 ```
 
-### 7. **Adapter Pattern**
+### 6. **Adapter Pattern**
 
 HTTP utilities adapt `undici` to a simplified interface:
 
