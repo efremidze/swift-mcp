@@ -345,7 +345,7 @@ export class PatreonSource {
         creator: sourcePattern.creator,
         topics,
         relevanceScore,
-        hasCode: true,
+        hasCode,
       });
     }
 
