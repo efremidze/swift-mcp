@@ -6,7 +6,7 @@ import readline from 'readline';
 import { startOAuthFlow, loadTokens } from '../sources/premium/patreon-oauth.js';
 import PatreonSource from '../sources/premium/patreon.js';
 import SourceManager from '../config/sources.js';
-import { CREATORS, withYouTube } from '../config/creators.js';
+import { withYouTube } from '../config/creators.js';
 import logger from '../utils/logger.js';
 
 const rl = readline.createInterface({
