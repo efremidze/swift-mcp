@@ -287,6 +287,7 @@ Add to your MCP client config:
     }
   }
 }
+```
 
 ## 💡 Usage Examples
 
