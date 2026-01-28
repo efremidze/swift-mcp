@@ -1,8 +1,8 @@
 // src/sources/premium/patreon.ts
 
 import { loadTokens, getValidAccessToken } from './patreon-oauth.js';
-import { getChannelVideos, searchVideos, Video } from './youtube.js';
-import { scanDownloadedContent, downloadPost, DownloadedPost, DownloadedFile } from './patreon-dl.js';
+import { searchVideos, Video } from './youtube.js';
+import { downloadPost, DownloadedPost, DownloadedFile } from './patreon-dl.js';
 import { CREATORS, withYouTube } from '../../config/creators.js';
 import { detectTopics, hasCodeContent, calculateRelevance } from '../../utils/swift-analysis.js';
 import { createSourceConfig } from '../../config/swift-keywords.js';
@@ -69,6 +69,8 @@ const { topicKeywords: patreonTopicKeywords, qualitySignals: patreonQualitySigna
 // Patreon-specific scoring constants
 const PATREON_CODE_BONUS = 15; // Higher bonus for code-heavy Patreon content
 const PATREON_BASE_SCORE = 0; // Start at 0 for Patreon to rely on quality signals
+const PATREON_EXCERPT_LENGTH = 300;
+const PATREON_DEFAULT_QUERY = 'swiftui';
 
 function isSwiftRelated(name: string, summary?: string): boolean {
   const text = `${name} ${summary || ''}`.toLowerCase();
@@ -165,52 +167,14 @@ export class PatreonSource {
   }
 
   async fetchPatterns(creatorId?: string): Promise<PatreonPattern[]> {
-    const patterns: PatreonPattern[] = [];
+    const patterns = await this.searchPatterns(PATREON_DEFAULT_QUERY);
 
-    // Use all known creators with YouTube channels, or filter by specific creator
-    const creatorsToFetch = creatorId
-      ? CREATORS.filter(c => c.patreonCampaignId === creatorId)
-      : withYouTube();
-    if (creatorId && creatorsToFetch.length === 0) {
-      return [];
-    }
-    // 1. Scan locally downloaded content (from patreon-dl)
-    const downloadedPosts = scanDownloadedContent();
+    if (!creatorId) return patterns;
 
-    for (const post of downloadedPosts) {
-      // Filter by creator if specified
-      const matchingCreator = creatorsToFetch.find(c => c.name === post.creator);
-      if (creatorId && !matchingCreator) continue;
+    const creator = CREATORS.find(c => c.patreonCampaignId === creatorId);
+    if (!creator) return [];
 
-      patterns.push(...this.downloadedPostToPatterns(post));
-    }
-
-    // 2. Fetch YouTube videos for additional metadata
-    for (const creator of creatorsToFetch) {
-      if (!creator.youtubeChannelId) continue;
-
-      try {
-        const videos = await getChannelVideos(creator.youtubeChannelId, 50);
-        for (const video of videos) {
-          // Add video as pattern (skip if we already have downloaded content for this)
-          const hasDownloaded = patterns.some(p =>
-            p.url === video.patreonLink || p.title.includes(video.title)
-          );
-          if (!hasDownloaded) {
-            patterns.push(this.videoToPattern(video, creator.name));
-          }
-        }
-      } catch (error) {
-        logError('Patreon', error, { creator: creator.name });
-      }
-    }
-
-    // Sort by date (newest first)
-    patterns.sort((a, b) =>
-      new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
-    );
-
-    return patterns;
+    return patterns.filter(pattern => pattern.creator === creator.name);
   }
 
   /**
@@ -222,7 +186,6 @@ export class PatreonSource {
       title: post.title,
       publishDate: post.publishDate || new Date().toISOString(),
       creator: post.creator,
-      excerptLength: 300,
     });
   }
 
@@ -238,7 +201,7 @@ export class PatreonSource {
       title: video.title,
       url: video.patreonLink || `https://youtube.com/watch?v=${video.id}`,
       publishDate: video.publishedAt,
-      excerpt: video.description.substring(0, 300),
+      excerpt: video.description.substring(0, PATREON_EXCERPT_LENGTH),
       content: video.description,
       creator: creatorName,
       topics,
@@ -271,43 +234,50 @@ export class PatreonSource {
    * Fetch actual code content from Patreon for patterns that have Patreon links
    */
   private async enrichPatternsWithContent(patterns: PatreonPattern[]): Promise<PatreonPattern[]> {
-    const enriched: PatreonPattern[] = [];
+    const concurrencyRaw = Number.parseInt(process.env.PATREON_ENRICH_CONCURRENCY || '1', 10);
+    const concurrency = Number.isFinite(concurrencyRaw) && concurrencyRaw > 0 ? concurrencyRaw : 1;
+    const outputs: PatreonPattern[][] = new Array(patterns.length);
+    let index = 0;
 
-    for (const pattern of patterns) {
-      // Only fetch content for Patreon URLs
-      if (!pattern.url.includes('patreon.com/posts/')) {
-        enriched.push(pattern);
-        continue;
-      }
+    const worker = async () => {
+      while (index < patterns.length) {
+        const currentIndex = index++;
+        const pattern = patterns[currentIndex];
 
-      try {
-        logger.info({ url: pattern.url }, 'Fetching Patreon post content');
-        const result = await downloadPost(pattern.url, pattern.creator);
-
-        if (result.success && result.files && result.files.length > 0) {
-          // Create patterns from downloaded files
-          const filePatterns = this.filesToPatterns(result.files, {
-            id: pattern.id,
-            title: pattern.title,
-            publishDate: pattern.publishDate,
-            creator: pattern.creator,
-          });
-          if (filePatterns.length > 0) {
-            enriched.push(...filePatterns);
-          } else {
-            enriched.push(pattern);
-          }
-        } else {
-          // Keep original pattern if download failed or no files
-          enriched.push(pattern);
+        // Only fetch content for Patreon URLs
+        if (!pattern.url.includes('patreon.com/posts/')) {
+          outputs[currentIndex] = [pattern];
+          continue;
         }
-      } catch (error) {
-        logError('Patreon', error, { url: pattern.url });
-        enriched.push(pattern);
-      }
-    }
 
-    return enriched;
+        try {
+          logger.info({ url: pattern.url }, 'Fetching Patreon post content');
+          const result = await downloadPost(pattern.url, pattern.creator);
+
+          if (result.success && result.files && result.files.length > 0) {
+            // Create patterns from downloaded files
+            const filePatterns = this.filesToPatterns(result.files, {
+              id: pattern.id,
+              title: pattern.title,
+              publishDate: pattern.publishDate,
+              creator: pattern.creator,
+            });
+            outputs[currentIndex] = filePatterns.length > 0 ? filePatterns : [pattern];
+          } else {
+            // Keep original pattern if download failed or no files
+            outputs[currentIndex] = [pattern];
+          }
+        } catch (error) {
+          logError('Patreon', error, { url: pattern.url });
+          outputs[currentIndex] = [pattern];
+        }
+      }
+    };
+
+    const workers = Array.from({ length: Math.min(concurrency, patterns.length) }, () => worker());
+    await Promise.all(workers);
+
+    return outputs.flat();
   }
 
   /**
@@ -315,10 +285,9 @@ export class PatreonSource {
    */
   private filesToPatterns(
     files: DownloadedFile[],
-    source: Pick<PatreonPattern, 'id' | 'title' | 'publishDate' | 'creator'> & { excerptLength?: number }
+    source: Pick<PatreonPattern, 'id' | 'title' | 'publishDate' | 'creator'>
   ): PatreonPattern[] {
     const patterns: PatreonPattern[] = [];
-    const excerptLength = source.excerptLength ?? 500;
 
     for (const file of files) {
       if (file.type === 'other') continue;
@@ -334,7 +303,7 @@ export class PatreonSource {
         title: `${source.title} - ${file.filename}`,
         url: `file://${file.filepath}`,
         publishDate: source.publishDate,
-        excerpt: content.substring(0, excerptLength),
+        excerpt: content.substring(0, PATREON_EXCERPT_LENGTH),
         content,
         creator: source.creator,
         topics,
