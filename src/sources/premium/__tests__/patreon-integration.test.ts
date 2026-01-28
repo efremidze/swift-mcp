@@ -23,9 +23,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { PatreonSource } from '../patreon.js';
 import {
   scanDownloadedContent,
-  isPostDownloaded,
   extractPostId,
-  isCookieConfigured
 } from '../patreon-dl.js';
 import { searchVideos, getChannelVideos } from '../youtube.js';
 import { CREATORS, withYouTube } from '../../../config/creators.js';
@@ -258,7 +256,8 @@ describe('Patreon Integration', () => {
       }, 120000);
 
       it('should fetch patterns for specific creator', async () => {
-        const kavId = '5338573'; // Kavsoft
+        const kavsoftConfig = CREATORS.find(c => c.name === 'Kavsoft');
+        const kavId = (kavsoftConfig && (kavsoftConfig as any).patreonCampaignId);
         const patterns = await patreon.fetchPatterns(kavId);
 
         if (patterns.length > 0) {
