@@ -127,7 +127,7 @@ export async function searchVideos(
     const res = await fetch(url);
     if (!res.ok) return [];
 
-    const data = await res.json() as {
+    const searchData = await res.json() as {
       items: Array<{
         id: { videoId: string };
         snippet: {
@@ -140,13 +140,49 @@ export async function searchVideos(
       }>;
     };
 
-    return data.items.map(i => ({
-      id: i.id.videoId,
+    const videoIds = searchData.items.map(i => i.id.videoId).join(',');
+    if (!videoIds) return [];
+
+    // Fetch full video details to get complete descriptions (search returns truncated)
+    const videosUrl = `${API_BASE}/videos?key=${apiKey}&id=${videoIds}&part=snippet`;
+    const videosRes = await fetch(videosUrl);
+
+    if (!videosRes.ok) {
+      // Fallback to search results (truncated descriptions)
+      return searchData.items.map(i => ({
+        id: i.id.videoId,
+        title: i.snippet.title,
+        description: i.snippet.description,
+        publishedAt: i.snippet.publishedAt,
+        channelId: i.snippet.channelId,
+        channelTitle: i.snippet.channelTitle,
+        patreonLink: extractPatreonLink(i.snippet.description),
+        codeLinks: extractCodeLinks(i.snippet.description),
+      }));
+    }
+
+    const videosData = await videosRes.json() as {
+      items: Array<{
+        id: string;
+        snippet: {
+          title: string;
+          description: string;
+          publishedAt: string;
+          channelId: string;
+          channelTitle: string;
+          tags?: string[];
+        };
+      }>;
+    };
+
+    return videosData.items.map(i => ({
+      id: i.id,
       title: i.snippet.title,
       description: i.snippet.description,
       publishedAt: i.snippet.publishedAt,
       channelId: i.snippet.channelId,
       channelTitle: i.snippet.channelTitle,
+      tags: i.snippet.tags,
       patreonLink: extractPatreonLink(i.snippet.description),
       codeLinks: extractCodeLinks(i.snippet.description),
     }));
