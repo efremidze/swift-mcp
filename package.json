@@ -20,7 +20,8 @@
     "source": "node build/cli/source-manager.js",
     "lint": "eslint . && tsc --noEmit",
     "pretest": "npm run build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:patreon": "npx tsx scripts/test-patreon-e2e.ts"
   },
   "keywords": [
     "mcp",
