@@ -22,6 +22,15 @@ interface TestResult {
 }
 
 const results: TestResult[] = [];
+const searchCache = new Map<string, ReturnType<PatreonSource['searchPatterns']>>();
+
+function cachedSearchPatterns(patreon: PatreonSource, query: string): ReturnType<PatreonSource['searchPatterns']> {
+  const cached = searchCache.get(query);
+  if (cached) return cached;
+  const promise = patreon.searchPatterns(query);
+  searchCache.set(query, promise);
+  return promise;
+}
 
 function test(name: string, passed: boolean, details?: string) {
   results.push({ name, passed, details });
@@ -113,7 +122,7 @@ async function main() {
 
     if (process.env.YOUTUBE_API_KEY) {
       await timedTest('searchPatterns returns results', async () => {
-        const patterns = await patreon.searchPatterns('SwiftUI');
+        const patterns = await cachedSearchPatterns(patreon, 'SwiftUI');
         return Array.isArray(patterns);
       });
 
@@ -131,13 +140,13 @@ async function main() {
     const patreon = new PatreonSource();
 
     await timedTest('Apple Stocks query returns code', async () => {
-      const patterns = await patreon.searchPatterns('Apple Stocks looping ScrollView');
+      const patterns = await cachedSearchPatterns(patreon, 'Apple Stocks looping ScrollView');
       const withCode = patterns.filter(p => p.hasCode && p.content && p.content.length > 100);
       return withCode.length > 0;
     });
 
     await timedTest('LoopingScrollView.swift found', async () => {
-      const patterns = await patreon.searchPatterns('Apple Stocks looping ScrollView');
+      const patterns = await cachedSearchPatterns(patreon, 'Apple Stocks looping ScrollView');
       const looping = patterns.find(p => p.title.includes('LoopingScrollView'));
       return Boolean(looping && looping.content?.includes('ScrollView'));
     });
