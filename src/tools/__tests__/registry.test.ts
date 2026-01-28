@@ -10,7 +10,7 @@ describe('Tool Registry', () => {
   // In practice, the registry is populated at startup
 
   it('should register and retrieve handlers', async () => {
-    const { registerHandler, getHandler } = await import('./registry.js');
+    const { registerHandler, getHandler } = await import('../registry.js');
 
     const mockHandler = async () => ({ content: [{ type: 'text', text: 'test' }] });
     registerHandler('test_tool', mockHandler);
@@ -20,14 +20,14 @@ describe('Tool Registry', () => {
   });
 
   it('should return undefined for unregistered handlers', async () => {
-    const { getHandler } = await import('./registry.js');
+    const { getHandler } = await import('../registry.js');
 
     const result = getHandler('nonexistent_tool_12345');
     expect(result).toBeUndefined();
   });
 
   it('should correctly report handler existence', async () => {
-    const { registerHandler, hasHandler } = await import('./registry.js');
+    const { registerHandler, hasHandler } = await import('../registry.js');
 
     const mockHandler = async () => ({ content: [{ type: 'text', text: 'test' }] });
     registerHandler('exists_tool', mockHandler);
@@ -37,7 +37,7 @@ describe('Tool Registry', () => {
   });
 
   it('should allow overwriting handlers', async () => {
-    const { registerHandler, getHandler } = await import('./registry.js');
+    const { registerHandler, getHandler } = await import('../registry.js');
 
     const handler1 = async () => ({ content: [{ type: 'text', text: 'first' }] });
     const handler2 = async () => ({ content: [{ type: 'text', text: 'second' }] });
@@ -53,8 +53,8 @@ describe('Tool Registry', () => {
 describe('Tool Registration Integration', () => {
   it('should have core tools registered after import', async () => {
     // Importing index.js registers all handlers
-    await import('./index.js');
-    const { hasHandler } = await import('./registry.js');
+    await import('../index.js');
+    const { hasHandler } = await import('../registry.js');
 
     expect(hasHandler('get_swift_pattern')).toBe(true);
     expect(hasHandler('search_swift_content')).toBe(true);
@@ -63,8 +63,8 @@ describe('Tool Registration Integration', () => {
   });
 
   it('should return valid handler functions', async () => {
-    await import('./index.js');
-    const { getHandler } = await import('./registry.js');
+    await import('../index.js');
+    const { getHandler } = await import('../registry.js');
 
     const handler = getHandler('get_swift_pattern');
     expect(typeof handler).toBe('function');

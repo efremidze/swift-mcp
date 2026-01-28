@@ -1,11 +1,11 @@
 // src/tools/handlers/handlers.test.ts
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getSwiftPatternHandler } from './getSwiftPattern.js';
-import { searchSwiftContentHandler } from './searchSwiftContent.js';
-import { listContentSourcesHandler } from './listContentSources.js';
-import { enableSourceHandler } from './enableSource.js';
-import type { ToolContext } from '../types.js';
+import { getSwiftPatternHandler } from '../getSwiftPattern.js';
+import { searchSwiftContentHandler } from '../searchSwiftContent.js';
+import { listContentSourcesHandler } from '../listContentSources.js';
+import { enableSourceHandler } from '../enableSource.js';
+import type { ToolContext } from '../../types.js';
 
 // Test fixtures - known patterns with specific properties for testing
 const MOCK_PATTERNS = {
@@ -86,32 +86,32 @@ const MOCK_PATTERNS = {
 };
 
 // Mock sources to return our test fixtures
-vi.mock('../../sources/free/sundell.js', () => ({
+vi.mock('../../../sources/free/sundell.js', () => ({
   default: vi.fn().mockImplementation(() => ({
     searchPatterns: vi.fn().mockResolvedValue(MOCK_PATTERNS.sundell),
   })),
 }));
 
-vi.mock('../../sources/free/vanderlee.js', () => ({
+vi.mock('../../../sources/free/vanderlee.js', () => ({
   default: vi.fn().mockImplementation(() => ({
     searchPatterns: vi.fn().mockResolvedValue(MOCK_PATTERNS.vanderlee),
   })),
 }));
 
-vi.mock('../../sources/free/nilcoalescing.js', () => ({
+vi.mock('../../../sources/free/nilcoalescing.js', () => ({
   default: vi.fn().mockImplementation(() => ({
     searchPatterns: vi.fn().mockResolvedValue(MOCK_PATTERNS.nilcoalescing),
   })),
 }));
 
-vi.mock('../../sources/free/pointfree.js', () => ({
+vi.mock('../../../sources/free/pointfree.js', () => ({
   default: vi.fn().mockImplementation(() => ({
     searchPatterns: vi.fn().mockResolvedValue(MOCK_PATTERNS.pointfree),
   })),
 }));
 
 // Mock SourceManager to ensure semantic recall is disabled in tests
-vi.mock('../../config/sources.js', () => ({
+vi.mock('../../../config/sources.js', () => ({
   default: vi.fn().mockImplementation(() => ({
     getSemanticRecallConfig: vi.fn().mockReturnValue({
       enabled: false,
