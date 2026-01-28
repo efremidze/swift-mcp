@@ -36,18 +36,6 @@ export interface DownloadedFile {
 }
 
 /**
- * Check if patreon-dl is available
- */
-export async function isPatreonDlAvailable(): Promise<boolean> {
-  try {
-    await execAsync(`${PATREON_DL_COMMAND} --version`);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Check if cookie is configured
  */
 export function isCookieConfigured(): boolean {
