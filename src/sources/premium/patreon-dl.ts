@@ -188,22 +188,6 @@ export async function downloadCreatorContent(
 }
 
 /**
- * Download content for all registered creators
- */
-export async function downloadAllCreators(): Promise<void> {
-  for (const creator of CREATORS) {
-    const patreonUrl = `https://www.patreon.com/c/${creator.id}`;
-    const result = await downloadCreatorContent(patreonUrl, creator.name);
-
-    if (result.success) {
-      logger.info({ creator: creator.name }, 'Downloaded content for creator');
-    } else {
-      logger.error({ creator: creator.name, error: result.error }, 'Failed to download creator content');
-    }
-  }
-}
-
-/**
  * Scan downloaded content and index files
  */
 export function scanDownloadedContent(): DownloadedPost[] {
