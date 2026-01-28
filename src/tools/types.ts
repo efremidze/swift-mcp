@@ -38,7 +38,6 @@ export interface PatreonSourceInstance {
   detectSwiftCreators(): Promise<CreatorInfo[]>;
   fetchPatterns(creatorId?: string): Promise<PatreonPattern[]>;
   searchPatterns(query: string): Promise<PatreonPattern[]>;
-  saveEnabledCreators(creatorIds: string[]): void;
 }
 
 /**

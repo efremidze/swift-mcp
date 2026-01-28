@@ -6,6 +6,7 @@ import readline from 'readline';
 import { startOAuthFlow, loadTokens } from '../sources/premium/patreon-oauth.js';
 import PatreonSource from '../sources/premium/patreon.js';
 import SourceManager from '../config/sources.js';
+import { CREATORS, withYouTube } from '../config/creators.js';
 import logger from '../utils/logger.js';
 
 const rl = readline.createInterface({
@@ -27,13 +28,22 @@ async function setupPatreon(): Promise<void> {
 
   const clientId = process.env.PATREON_CLIENT_ID;
   const clientSecret = process.env.PATREON_CLIENT_SECRET;
+  const youtubeKey = process.env.YOUTUBE_API_KEY;
 
-  if (!clientId || !clientSecret) {
-    print('❌ Missing Patreon credentials.\n');
-    print('Please set these environment variables:');
-    print('  PATREON_CLIENT_ID=your_client_id');
-    print('  PATREON_CLIENT_SECRET=your_client_secret\n');
-    print('Get credentials at: https://www.patreon.com/portal/registration/register-clients');
+  // Check all required env vars
+  const missing: string[] = [];
+  if (!clientId) missing.push('PATREON_CLIENT_ID');
+  if (!clientSecret) missing.push('PATREON_CLIENT_SECRET');
+  if (!youtubeKey) missing.push('YOUTUBE_API_KEY');
+
+  if (missing.length > 0) {
+    print('❌ Missing required environment variables:\n');
+    for (const v of missing) {
+      print(`  - ${v}`);
+    }
+    print('\nAdd these to your .env file or environment.');
+    print('Get Patreon credentials at: https://www.patreon.com/portal/registration/register-clients');
+    print('Get YouTube API key at: https://console.cloud.google.com/apis/credentials');
     rl.close();
     process.exit(1);
   }
@@ -50,8 +60,8 @@ async function setupPatreon(): Promise<void> {
   }
 
   // Step 1: OAuth
-  print('Step 1/3: Authentication');
-  const result = await startOAuthFlow(clientId, clientSecret);
+  print('Step 1/2: Authentication');
+  const result = await startOAuthFlow(clientId!, clientSecret!);
 
   if (!result.success) {
     print(`\n❌ Authorization failed: ${result.error}`);
@@ -61,75 +71,18 @@ async function setupPatreon(): Promise<void> {
 
   print('✓ Authenticated successfully!\n');
 
-  // Step 2: Detect creators
-  print('Step 2/3: Detecting Swift/iOS Creators');
-  print('Scanning your subscriptions...\n');
+  // Step 2: Show configured creators and test
+  print('Step 2/2: Verifying Setup');
+
+  const creatorsWithYouTube = withYouTube();
+  print(`\nConfigured creators (${creatorsWithYouTube.length}):`);
+  for (const creator of creatorsWithYouTube) {
+    print(`  ✓ ${creator.name}`);
+  }
+
+  print('\nTesting content fetch...\n');
 
   const patreon = new PatreonSource();
-  const allCreators = await patreon.getSubscribedCreators();
-  const swiftCreators = allCreators.filter(c => c.isSwiftRelated);
-
-  if (allCreators.length === 0) {
-    print('No Patreon subscriptions found.');
-    print('Subscribe to iOS/Swift creators on Patreon, then run setup again.');
-    rl.close();
-    return;
-  }
-
-  // Display creators with pre-selection
-  const selected = new Set(swiftCreators.map(c => c.id));
-
-  print(`Found ${allCreators.length} subscriptions:\n`);
-
-  function displayCreators(): void {
-    allCreators.forEach((c, i) => {
-      const check = selected.has(c.id) ? '✓' : ' ';
-      const swift = c.isSwiftRelated ? ' (Swift/iOS)' : '';
-      print(`  ${check} [${i + 1}] ${c.name}${swift}`);
-    });
-  }
-
-  displayCreators();
-
-  print('\nToggle numbers to change selection, or press Enter to confirm.');
-
-  while (true) {
-    const input = await question('\nToggle (or Enter to confirm): ');
-
-    if (input.trim() === '') {
-      break;
-    }
-
-    const nums = input.split(/[\s,]+/).map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
-
-    for (const num of nums) {
-      if (num >= 1 && num <= allCreators.length) {
-        const creator = allCreators[num - 1];
-        if (selected.has(creator.id)) {
-          selected.delete(creator.id);
-        } else {
-          selected.add(creator.id);
-        }
-      }
-    }
-
-    print('\nUpdated selection:');
-    displayCreators();
-  }
-
-  if (selected.size === 0) {
-    print('\n⚠️  No creators selected. You can run setup again later.');
-    rl.close();
-    return;
-  }
-
-  // Save selected creators
-  patreon.saveEnabledCreators(Array.from(selected));
-
-  // Step 3: Initial sync
-  print('\nStep 3/3: Initial Sync');
-  print(`Fetching content from ${selected.size} creator(s)...\n`);
-
   const patterns = await patreon.fetchPatterns();
 
   const creatorStats = new Map<string, { posts: number; withCode: number }>();
@@ -142,9 +95,8 @@ async function setupPatreon(): Promise<void> {
     if (p.hasCode) stats.withCode++;
   }
 
-  for (const [creatorId, stats] of creatorStats) {
-    const creator = allCreators.find(c => c.id === creatorId);
-    print(`  ${creator?.name || creatorId}: ${stats.posts} posts (${stats.withCode} with code)`);
+  for (const [creatorName, stats] of creatorStats) {
+    print(`  ${creatorName}: ${stats.posts} posts (${stats.withCode} with code)`);
   }
 
   // Mark as configured
@@ -152,7 +104,7 @@ async function setupPatreon(): Promise<void> {
   sourceManager.markSourceConfigured('patreon');
 
   print('\n✅ Setup complete!\n');
-  print(`Found ${patterns.length} posts across ${selected.size} creator(s).`);
+  print(`Found ${patterns.length} posts from ${creatorStats.size} creator(s).`);
   print("Use 'get_patreon_patterns' in your AI assistant to search them.\n");
 
   rl.close();
